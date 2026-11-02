@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Candidaturas</title>
+  <!-- Versão de uma cor: herda a cor do texto ao redor (currentColor). As colunas são vazadas e os cards ficam na cor cheia. -->
+  <defs>
+    <mask id="board">
+      <rect width="64" height="64" fill="#ffffff"/>
+      <g fill="#000000">
+        <rect x="10" y="12" width="12" height="40" rx="4"/>
+        <rect x="26" y="12" width="12" height="40" rx="4"/>
+        <rect x="42" y="12" width="12" height="40" rx="4"/>
+      </g>
+      <g fill="#ffffff">
+        <rect x="12" y="14" width="8" height="7" rx="2"/>
+        <rect x="12" y="24" width="8" height="7" rx="2"/>
+        <rect x="28" y="14" width="8" height="7" rx="2"/>
+        <rect x="28" y="24" width="8" height="7" rx="2"/>
+        <rect x="28" y="34" width="8" height="7" rx="2"/>
+        <rect x="44" y="14" width="8" height="7" rx="2"/>
+      </g>
+    </mask>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="currentColor" mask="url(#board)"/>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Ícone de app (PWA/atalho): fundo sangrando até a borda e desenho dentro da área segura central. -->
+  <rect width="512" height="512" fill="#4f46e5"/>
+  <g transform="translate(256 256) scale(6.5) translate(-32 -32)">
+    <g fill="#4338ca">
+      <rect x="10" y="12" width="12" height="40" rx="4"/>
+      <rect x="26" y="12" width="12" height="40" rx="4"/>
+      <rect x="42" y="12" width="12" height="40" rx="4"/>
+    </g>
+    <g fill="#ffffff">
+      <rect x="12" y="14" width="8" height="7" rx="2"/>
+      <rect x="12" y="24" width="8" height="7" rx="2"/>
+      <rect x="28" y="14" width="8" height="7" rx="2"/>
+      <rect x="28" y="24" width="8" height="7" rx="2"/>
+      <rect x="28" y="34" width="8" height="7" rx="2"/>
+      <rect x="44" y="14" width="8" height="7" rx="2"/>
+    </g>
+  </g>
+</svg>

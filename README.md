@@ -7,6 +7,9 @@ A documentação completa está em [specs/](specs/):
 - [overview.md](specs/overview.md): contexto, objetivos, funcionalidades e escopo
 - [domain.md](specs/domain.md): models, enums, interfaces e regras de negócio
 - [api.md](specs/api.md): checklist das rotas e dos testes
+- [design/ui.md](specs/design/ui.md): guia de UI/UX, com as telas, o que cada uma consome e os critérios de aceite
+- [design/design.md](specs/design/design.md): design system, com cores (tema escuro por padrão), fontes, ícones, layout, componentes e regras de uso
+- [design/prototype/](specs/design/prototype/index.html): protótipo navegável da interface; abra o `index.html` no navegador
 
 ## Monorepo
 

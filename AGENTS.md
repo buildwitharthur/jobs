@@ -16,6 +16,9 @@ Antes de escrever código, criar arquivos, sugerir mudanças ou responder dúvid
 | [specs/domain.md](specs/domain.md) | Models, enums, interfaces de entrada e saída e regras de negócio |
 | [apps/api/AGENTS.md](apps/api/AGENTS.md) | Arquitetura, padrões e tecnologias da API |
 | [specs/api.md](specs/api.md) | Checklist das rotas: método, caminho, payload, resposta e testes |
+| [specs/design/ui.md](specs/design/ui.md) | Guia de UI/UX: telas, o que cada uma consome, critérios de aceite e metas de cliques |
+| [specs/design/design.md](specs/design/design.md) | Design system: cores (temas escuro e claro), fontes, ícones, layout, elevação, formas, movimento e componentes |
+| [specs/design/prototype/](specs/design/prototype/index.html) | Protótipo navegável da interface (HTML, CSS e JS). **Fonte da verdade para construir a interface** |
 
 Leia sempre o `overview.md` primeiro. Depois leia os documentos relacionados à tarefa.
 
@@ -35,8 +38,11 @@ Leia sempre o `overview.md` primeiro. Depois leia os documentos relacionados à 
    - `pnpm test`: testes de todos os apps
 
    Se algum falhar, corrija a causa antes de seguir. Não desative regras, não ignore arquivos e não pule testes só para passar. Se não conseguir corrigir, ou se um erro já existia antes da sua mudança, avise e pergunte. Informe no final quais scripts rodou e o resultado de cada um. Se um script não existir ou não puder rodar (por exemplo, ainda não há testes), diga isso em vez de omitir.
+9. **Construa a interface a partir do protótipo.** O [protótipo](specs/design/prototype/index.html) é a fonte da verdade para a interface: telas, layout, componentes, estados, textos, placeholders, ícones, cores e interações devem ficar iguais aos dele. Abra o protótipo e leia o `index.html`, o `index.css` e o `main.js` antes de construir qualquer tela. O [ui.md](specs/design/ui.md) e o [design.md](specs/design/design.md) explicam o porquê das decisões; o protótipo mostra como elas ficam. Na interface real, os dados vêm da API (ver [api.md](specs/api.md)), não dos dados de exemplo nem da "api" em memória do protótipo.
 
 ## Quando houver conflito
 
 - Se o código e a documentação divergirem, a documentação vale. Aponte a divergência e pergunte como resolver.
 - Se dois documentos se contradisserem, não escolha um. Aponte a contradição e pergunte.
+- Na construção da interface, se o protótipo divergir do `ui.md` ou do `design.md`, o protótipo vale. Aponte a divergência para a documentação ser corrigida.
+- Regras de negócio, rotas e formato dos dados continuam vindo de `domain.md` e `api.md`. Se o protótipo divergir deles, não escolha: aponte e pergunte.

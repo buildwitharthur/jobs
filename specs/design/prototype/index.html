@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Candidaturas — Protótipo</title>
+    <script>
+      // Aplica o tema salvo antes de pintar a página (o padrão é o escuro).
+      try {
+        if (localStorage.getItem("candidaturas-prototype-theme") === "light") {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch {}
+    </script>
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="app">
+      <nav class="nav" aria-label="Navegação principal">
+        <a class="nav__logo" href="#/candidaturas" aria-label="Candidaturas — início">
+          <img id="nav-logo" src="../assets/logo-on-dark.svg" alt="Candidaturas" width="130" height="32" />
+        </a>
+        <ul class="nav__list" id="nav-list"></ul>
+        <div class="nav__footer">
+          <p class="nav__note">Protótipo com dados de exemplo, salvos só neste navegador.</p>
+          <button type="button" class="button button--ghost" id="theme-toggle" data-action="toggle-theme"></button>
+          <button type="button" class="button button--ghost" id="reset-data" data-action="reset-data"></button>
+        </div>
+      </nav>
+
+      <main class="main" id="main" tabindex="-1"></main>
+    </div>
+
+    <aside class="drawer" id="drawer" aria-label="Detalhe da candidatura" hidden></aside>
+
+    <div class="modal-backdrop" id="modal" hidden></div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <div class="drop-overlay" id="drop-overlay" hidden>
+      <div class="drop-overlay__box">Solte o PDF para cadastrar um currículo</div>
+    </div>
+
+    <input type="file" id="file-input" accept="application/pdf,.pdf" hidden />
+
+    <script src="main.js" defer></script>
+  </body>
+</html>
