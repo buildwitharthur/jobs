@@ -344,5 +344,7 @@ type ErrorCode =
 interface ApiError {
   code: ErrorCode;
   message: string;
+  /** Só em erros de validação: campo (`body.x`, `params.x`, `query.x`) → mensagem. */
+  details?: Record<string, string>;
 }
 ```

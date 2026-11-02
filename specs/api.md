@@ -8,15 +8,18 @@ Checklist das rotas da API do app de controle de candidaturas (ver [overview.md]
 - Corpo das requisições e respostas em JSON, exceto upload e download de currículo (`multipart/form-data` e `application/pdf`).
 - Datas no formato ISO 8601 (`2026-11-02` para datas, `2026-11-02T14:30:00Z` para data/hora).
 - Sem autenticação.
+- Payloads (`body`) e parâmetros de query rejeitam campos desconhecidos com 400.
 - Formato padrão de erro (tratado pelo `errorHandler` da API):
 
 ```json
 {
   "code": "validation_error",
-  "message": "Descrição legível do erro"
+  "message": "Dados inválidos.",
+  "details": { "body.company": "Entrada inválida: esperava um texto, recebeu um valor \"undefined\"" }
 }
 ```
 
+- `details` só aparece em erros de validação: mapeia cada campo que falhou (`body.<campo>`, `params.<campo>` ou `query.<campo>`) para a mensagem do erro.
 - `code` identifica o tipo do erro (`validation_error`, `not_found`, `conflict`, `internal_error`). Erros de aplicação lançados sem código usam `bad_request`.
 - Erros inesperados retornam 500 com `code` `internal_error` e uma mensagem genérica, sem expor detalhes internos.
 
@@ -177,7 +180,7 @@ Retorna a lista fixa de status, na ordem das colunas do kanban.
 - [ ] Retorna 400 com `work_model` fora de `remote`, `hybrid`, `onsite`.
 - [ ] Retorna 400 com `applied_at` em formato inválido.
 - [ ] Retorna 400 com `resume_id` de currículo que não existe.
-- [ ] Ignora campos desconhecidos no payload (ou retorna 400; definir e testar um dos dois).
+- [ ] Retorna 400 com campos desconhecidos no payload.
 
 ### [ ] `GET /applications` — Listar candidaturas
 

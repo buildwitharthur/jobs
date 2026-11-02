@@ -22,8 +22,8 @@ Na raiz ficam ESLint (com typescript-eslint), Prettier (com prettier-plugin-tail
 
 1. Instale as dependências: `pnpm install`
 2. Suba o PostgreSQL (versão 18, banco `jobs`, volume `postgres_data`): `docker compose up -d`
-3. Copie `apps/api/.env.example` para `apps/api/.env` e confira a `DATABASE_URL`
-4. Gere o cliente do Prisma, dentro de `apps/api`: `pnpm exec prisma generate --config prisma7.config.ts`
+3. Copie `apps/api/.env.example` para `apps/api/.env` (o Compose expõe o Postgres na porta `5433`)
+4. Dentro de `apps/api`, aplique as migrations e gere o cliente do Prisma: `pnpm exec prisma migrate deploy --config prisma7.config.ts` e `pnpm exec prisma generate --config prisma7.config.ts`
 5. Inicie a API: `pnpm dev` (porta `3000`, ou a definida em `PORT`)
 
 Com a API no ar, a documentação Swagger fica em `GET /docs` e o JSON em `GET /openapi.json`.
@@ -47,22 +47,22 @@ Ficam em [apps/api/src/modules](apps/api/src/modules), um por seção do [api.md
 
 Lista fixa dos 9 status, que definem as colunas do kanban: Inscrito, Em análise / Triagem, Entrevista, Teste técnico / Case, Proposta, Aprovado / Aceito, Reprovado, Desisti e Sem retorno. Rota: `GET /statuses`.
 
-### `applications` — a implementar
+### `applications` — implementado
 
 Candidaturas: criar, listar com filtros e busca, detalhar com histórico, editar, mudar de status e excluir. A mudança de status é a operação que o kanban usa ao arrastar um card.
 
-### `events` — a implementar
+### `events` — implementado
 
 Histórico de cada candidatura: eventos de criação, de mudança de status e notas manuais (entrevista marcada, feedback). Listar, adicionar, editar e excluir.
 
-### `board` — a implementar
+### `board` — implementado
 
 Dados do kanban: candidaturas agrupadas por status, sempre com as 9 colunas, com os mesmos filtros de busca da listagem.
 
-### `resumes` — a implementar
+### `resumes` — implementado
 
 Versões do currículo: upload de PDF guardado numa pasta do projeto, edição, troca do arquivo, download e lista das candidaturas que usaram cada currículo. Um currículo em uso não pode ser excluído.
 
-### `dashboard` — a implementar
+### `dashboard` — implementado
 
 Painel com o resumo geral: total, ativas e encerradas, contagem por status, candidaturas dos últimos 30 dias e eventos recentes.

@@ -33,7 +33,7 @@ server.ts ──► app.ts
                 │
                 ▼
               <verb><Entity>Controller
-                │  1. valida a requisição com Zod (safeParse → `parsed`)
+                │  1. valida a requisição com `dataValidation` (Zod) → `parsed`
                 │  2. instancia o use case com o repositório concreto
                 │  3. executa e devolve a resposta campo a campo
                 ▼
@@ -43,7 +43,7 @@ server.ts ──► app.ts
               <Entity>Repository          interface (domain)
                 ▲
                 │ implementa
-              <Entity>RepositoryImpl      acesso a dados (infrastructure)
+              <Entity>PrismaRepository    acesso a dados (infrastructure)
 ```
 
 Qualquer erro lançado no caminho (`throw new AppError(...)` ou um erro inesperado) chega ao `errorHandler`, o último middleware do `app.ts`, que monta a resposta de erro.
@@ -72,21 +72,23 @@ apps/api/
     │   ├── domain/errors/
     │   └── infrastructure/
     │       ├── database/prisma/
-    │       └── http/
+    │       ├── http/
+    │       └── validation/zod/
     └── modules/
         └── <module>/
-            ├── domain/{models,repositories}/
+            ├── domain/{models,repositories,providers}/
             ├── application/usecases/
-            └── infrastructure/{http/{controller,routes},repositories}/
+            └── infrastructure/{http/{controller,routes},providers,repositories/{prisma}}/
 ```
 
 ### `src/common`: o que é compartilhado por todos os módulos
 
 | Pasta                                   | Função                                                                                                      | Conteúdo                                                                                                      |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `common/domain/errors/`                 | Erros de negócio que qualquer camada pode lançar, sem depender de HTTP                                      | `app-error.ts`: `AppError(message, statusCode = 400, code = "bad_request")`                                   |
+| `common/domain/errors/`                 | Erros de negócio que qualquer camada pode lançar, sem depender de HTTP                                      | `app-error.ts`: `AppError(message, statusCode = 400, code = "bad_request", details?)`                         |
 | `common/infrastructure/database/prisma/`| Conexão com o banco                                                                                         | `index.ts` exporta a instância `prisma`; `generated/` é o cliente gerado (não versionado, nunca edite)         |
 | `common/infrastructure/http/`           | Tudo que monta e sobe o servidor Express                                                                    | Arquivos abaixo                                                                                               |
+| `common/infrastructure/validation/zod/` | Validação de dados de entrada com Zod                                                                       | `data-validation.ts`: `dataValidation(schema, content)`, devolve os dados formatados ou lança `AppError` 400 com `details` |
 
 Arquivos de `common/infrastructure/http/`:
 
@@ -96,7 +98,7 @@ Arquivos de `common/infrastructure/http/`:
 | `app.ts`                          | Monta o Express: `cors()`, `express.json()`, `/openapi.json`, `/docs`, `routes`, `errorHandler`  |
 | `routes.ts`                       | Router raiz. Importa o router de cada módulo e o monta com `routes.use(<entity>Routes)`          |
 | `openapi.ts`                      | Registro compartilhado do Swagger (`registry`) e o documento OpenAPI gerado a partir dele        |
-| `middlewares/errors.middleware.ts`| `errorHandler`: responde `{ code, message }` para `AppError` e 500 `internal_error` para o resto |
+| `middlewares/errors.middleware.ts`| `errorHandler`: responde `{ code, message, details? }` para `AppError` e 500 `internal_error` para o resto |
 
 ### `src/modules/<module>`: um módulo por seção do [api.md](../../specs/api.md)
 
@@ -109,7 +111,10 @@ Módulos: `statuses`, `applications`, `events`, `board`, `resumes`, `dashboard`.
 | `application/usecases/`                    | As regras de negócio                                                      | Uma classe por arquivo, com um método `execute()`, e os tipos `Input` e `Output` do use case  | Express, Prisma, Zod           |
 | `infrastructure/http/controller/`          | A borda HTTP de cada rota                                                 | Uma arrow function por rota: valida, chama o use case, responde. Também o `registerPath` do Swagger | Regra de negócio               |
 | `infrastructure/http/routes/`              | Liga método + caminho ao controller                                       | Um `Router` exportado como `<entity>Routes`                                                   | Lógica                         |
-| `infrastructure/repositories/`             | A implementação concreta do repositório                                   | Classe `<Entity>RepositoryImpl` que implementa a interface de `domain/repositories`          | Regra de negócio               |
+| `domain/providers/`                        | O contrato de serviços externos que não são dados do banco               | Interface descrevendo o que o controller/use case precisa (ex.: ler um upload)                | Implementação, qualquer stack  |
+| `infrastructure/providers/`                | A implementação concreta de um provider                                   | Classe que implementa a interface de `domain/providers`, usando a biblioteca (ex.: multer)    | Regra de negócio               |
+| `infrastructure/repositories/`             | A implementação concreta do repositório quando **não** usa o banco        | Classe `<Entity>RepositoryImpl` que implementa a interface de `domain/repositories`          | Regra de negócio               |
+| `infrastructure/repositories/prisma/`      | A implementação concreta do repositório quando usa o banco                | Classe `<Entity>PrismaRepository` que implementa a interface de `domain/repositories`        | Regra de negócio               |
 
 Exemplo de árvore (módulo `items`):
 
@@ -117,7 +122,8 @@ Exemplo de árvore (módulo `items`):
 modules/items/
 ├── domain/
 │   ├── models/item.model.ts
-│   └── repositories/item.repository.ts
+│   ├── repositories/item.repository.ts
+│   └── providers/                        # só se o módulo usa serviços externos
 ├── application/
 │   └── usecases/
 │       ├── create-item.usecase.ts
@@ -126,8 +132,12 @@ modules/items/
     ├── http/
     │   ├── controller/item.controller.ts
     │   └── routes/item.routes.ts
-    └── repositories/item.repository.ts
+    ├── providers/                        # implementações dos providers do domínio
+    └── repositories/
+        └── prisma/item-prisma.repository.ts
 ```
+
+Quando o módulo **usa o banco**, a implementação do repositório fica em `repositories/prisma/`, com o arquivo `<entity>-prisma.repository.ts` e a classe `<Entity>PrismaRepository`. Quando **não** usa (ex.: `statuses`, que é uma lista fixa, ou os arquivos em disco de `resumes`), fica direto em `repositories/`, como `<entity>.repository.ts` e `<Entity>RepositoryImpl`.
 
 ## Padrões de código, camada por camada
 
@@ -214,15 +224,15 @@ Regras:
 - Quem chama o use case (o controller) pode importar esses tipos para tipar o que monta para o `execute()`.
 - Não use `namespace`: a regra `@typescript-eslint/no-namespace` do ESLint proíbe, e o padrão é exportar os tipos soltos no arquivo.
 
-### Repository, implementação (`infrastructure/repositories/item.repository.ts`)
+### Repository, implementação (`infrastructure/repositories/prisma/item-prisma.repository.ts`)
 
-Implementa a interface do domínio. É o único lugar do módulo que fala com o banco (ou com qualquer fonte de dados). Converte o que vem de fora para o model do domínio.
+Implementa a interface do domínio. É o único lugar do módulo que fala com o banco (ou com qualquer fonte de dados). Converte o que vem de fora para o model do domínio. Usa o banco: pasta `prisma/` e classe `<Entity>PrismaRepository`.
 
 ```ts
 import type { Item } from "../../domain/models/item.model.js";
 import type { ItemRepository } from "../../domain/repositories/item.repository.js";
 
-export class ItemRepositoryImpl implements ItemRepository {
+export class ItemPrismaRepository implements ItemRepository {
   async findById(id: number): Promise<Item | null> {
     // consulta ao banco, devolvendo o model do domínio ou null
   }
@@ -235,7 +245,7 @@ export class ItemRepositoryImpl implements ItemRepository {
 
 Uma arrow function por rota, mais o schema Zod e o registro no Swagger da própria rota. Passos, sempre nesta ordem:
 
-1. Validar com Zod usando `safeParse`; se falhar, lançar `AppError(message, 400, "validation_error")`.
+1. Validar com `dataValidation(schema, content)`: devolve os dados já formatados (`parsed`) ou lança o erro 400 com os campos que falharam.
 2. Instanciar o use case com a implementação concreta do repositório.
 3. Executar o use case.
 4. Responder montando cada campo explicitamente (desestruturado), sem devolver o objeto do use case inteiro.
@@ -243,10 +253,10 @@ Uma arrow function por rota, mais o schema Zod e o registro no Swagger da própr
 ```ts
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { AppError } from "../../../../../common/domain/errors/app-error.js";
+import { dataValidation } from "../../../../../common/infrastructure/validation/zod/data-validation.js";
 import { registry } from "../../../../../common/infrastructure/http/openapi.js";
 import { CreateItemUseCase } from "../../../application/usecases/create-item.usecase.js";
-import { ItemRepositoryImpl } from "../../repositories/item.repository.js";
+import { ItemPrismaRepository } from "../../repositories/prisma/item-prisma.repository.js";
 
 const itemResponseSchema = z.object({
   id: z.number().int(),
@@ -279,14 +289,10 @@ registry.registerPath({
 });
 
 export const createItemController = async (req: Request, res: Response) => {
-  const parsed = createItemRequestSchema.safeParse({ body: req.body });
+  const parsed = dataValidation(createItemRequestSchema, { body: req.body });
 
-  if (!parsed.success) {
-    throw new AppError("Payload inválido.", 400, "validation_error");
-  }
-
-  const createItem = new CreateItemUseCase(new ItemRepositoryImpl());
-  const item = await createItem.execute(parsed.data.body); // CreateItemInput
+  const createItem = new CreateItemUseCase(new ItemPrismaRepository());
+  const item = await createItem.execute(parsed.body); // CreateItemInput
 
   return res.status(201).json({ id: item.id, name: item.name, description: item.description });
 };
@@ -294,7 +300,7 @@ export const createItemController = async (req: Request, res: Response) => {
 
 Regras do controller:
 
-- Valida **tudo** que a rota recebe (`body`, `params`, `query`) num único schema `z.object({ body, params, query })`, com um único `safeParse` cujo resultado se chama `parsed`. Só entram no schema as partes que a rota realmente recebe.
+- Valida **tudo** que a rota recebe (`body`, `params`, `query`) num único schema `z.object({ body, params, query })`, validado por uma única chamada de `dataValidation`, cujo resultado se chama `parsed`. Só entram no schema as partes que a rota realmente recebe.
 - Parâmetros de rota e query chegam como texto: use `z.coerce` para converter (ex.: `z.coerce.number().int().positive()` para `:id`).
 - Rota sem nada a validar (ex.: `GET /statuses`) não usa Zod e não tem `parsed`.
 - Controllers async podem lançar erro direto: o Express 5 encaminha a rejeição para o `errorHandler`. Não use `try/catch` só para repassar o erro.
@@ -336,7 +342,7 @@ export { routes };
 ### Erros
 
 - Regra de negócio violada: `throw new AppError(message, statusCode, code)` no use case.
-- Validação de entrada: `throw new AppError("...", 400, "validation_error")` no controller.
+- Validação de entrada: `dataValidation` (em `common/infrastructure/validation/zod/data-validation.ts`) lança `AppError("Dados inválidos.", 400, "validation_error", details)`, com a mensagem de cada campo que falhou. Não faça `safeParse` à mão no controller.
 - Códigos usados: `validation_error`, `not_found`, `conflict`, `bad_request` (padrão do `AppError`) e `internal_error` (500, gerado pelo `errorHandler`). Os status HTTP estão no [api.md](../../specs/api.md).
 - Resposta de erro: sempre `{ code, message }`.
 
@@ -349,7 +355,9 @@ Sempre `kebab-case`, no formato `<nome>.<tipo>.ts`.
 | Tipo       | Arquivo                                  | Observação                                                          |
 | ---------- | ---------------------------------------- | ------------------------------------------------------------------- |
 | Model      | `<entity>.model.ts`                      | Entidade no singular (`item.model.ts`)                              |
-| Repository | `<entity>.repository.ts`                 | A interface em `domain/repositories`, a implementação em `infrastructure/repositories`. O mesmo nome nas duas pastas é intencional |
+| Repository | `<entity>.repository.ts`                 | A interface em `domain/repositories`; a implementação sem banco em `infrastructure/repositories` (mesmo nome nas duas pastas, de propósito) |
+| Repository (banco) | `<entity>-prisma.repository.ts`  | Em `infrastructure/repositories/prisma/`                           |
+| Provider   | `<nome>.provider.ts`                     | A interface em `domain/providers` (ex.: `file-upload.provider.ts`); a implementação em `infrastructure/providers` com o nome da biblioteca (ex.: `multer-file-upload.provider.ts`) |
 | Use case   | `<verb>-<entity>.usecase.ts`             | Nomeado pela ação (`create-item.usecase.ts`, `list-items.usecase.ts`) |
 | Controller | `<entity>.controller.ts`                 | Um arquivo por entidade, com um controller por rota dentro          |
 | Routes     | `<entity>.routes.ts`                     | Singular, como o controller                                         |
@@ -364,7 +372,10 @@ Sempre `kebab-case`, no formato `<nome>.<tipo>.ts`.
 | Entrada do use case      | `<Verb><Entity>Input`     | `CreateItemInput`      |
 | Saída do use case        | `<Verb><Entity>Output`    | `CreateItemOutput`     |
 | Interface do repositório | `<Entity>Repository`      | `ItemRepository`       |
-| Implementação            | `<Entity>RepositoryImpl`  | `ItemRepositoryImpl`   |
+| Implementação (com banco) | `<Entity>PrismaRepository` | `ItemPrismaRepository` |
+| Implementação (sem banco) | `<Entity>RepositoryImpl` | `StatusRepositoryImpl` |
+| Interface de provider    | `<Nome>Provider`          | `FileUploadProvider`   |
+| Implementação de provider | `<Lib><Nome>Provider`    | `MulterFileUploadProvider` |
 | Use case                 | `<Verb><Entity>UseCase`   | `CreateItemUseCase`    |
 
 Verbos dos use cases: `List`, `Get`, `Create`, `Update`, `Delete` e, para operações específicas, o verbo do negócio (ex.: `Change`). Listas usam o plural (`ListItemsUseCase`, `ListItemsOutput`). Os tipos `Input` e `Output` têm o mesmo prefixo da classe e ficam no arquivo do use case.
@@ -383,8 +394,8 @@ Verbos dos use cases: `List`, `Get`, `Create`, `Update`, `Delete` e, para opera�
 
 | O quê                                  | Nome                               | Exemplo                                             |
 | -------------------------------------- | ---------------------------------- | --------------------------------------------------- |
-| Resultado do `safeParse` do Zod        | sempre `parsed`                    | `const parsed = createItemRequestSchema.safeParse(...)` |
-| Dados validados                        | `parsed.data`                      | `parsed.data.body`, `parsed.data.params.id`         |
+| Resultado de `dataValidation`          | sempre `parsed`                    | `const parsed = dataValidation(createItemRequestSchema, { body: req.body })` |
+| Dados validados                        | direto em `parsed`                 | `parsed.body`, `parsed.params.id`                   |
 | Instância do use case                  | a ação em `camelCase`              | `const createItem = new CreateItemUseCase(...)`     |
 | Resultado do use case                  | a entidade (plural em listas)      | `const item = ...`, `const items = ...`             |
 | Repositório no construtor              | `<entity>Repository`               | `private readonly itemRepository: ItemRepository`   |
@@ -404,7 +415,7 @@ Outras regras:
 2. `domain/models/<entity>.model.ts`: entidade e enums.
 3. `domain/repositories/<entity>.repository.ts`: a interface.
 4. `application/usecases/`: um arquivo por use case, cada um exportando `Input` e `Output` e com `execute()`.
-5. `infrastructure/repositories/<entity>.repository.ts`: a implementação.
+5. `infrastructure/repositories/prisma/<entity>-prisma.repository.ts` (ou `repositories/<entity>.repository.ts` se não usar o banco): a implementação.
 6. `infrastructure/http/controller/<entity>.controller.ts`: um controller por rota, com Zod e `registerPath`.
 7. `infrastructure/http/routes/<entity>.routes.ts`: o router do módulo.
 8. Montar o router em `common/infrastructure/http/routes.ts`.
@@ -416,7 +427,7 @@ Outras regras:
 - Ordem dos middlewares em `app.ts`: `cors()`, `express.json()`, `/openapi.json` e `/docs`, `routes`, `errorHandler` (sempre por último).
 - CORS liberado para qualquer origem (`cors()` sem opções).
 - Rotas na raiz, sem prefixo `/api`.
-- Erros: o `errorHandler` responde `{ code, message }` com o `statusCode` do `AppError`. Qualquer outro erro vira 500 com `internal_error` e uma mensagem genérica.
+- Erros: o `errorHandler` responde `{ code, message }` com o `statusCode` do `AppError`, mais `details` (campo → mensagem) quando houver. Qualquer outro erro vira 500 com `internal_error` e uma mensagem genérica.
 
 ## Banco de dados (Prisma)
 
@@ -434,10 +445,17 @@ Outras regras:
 - `start`: roda `dist/common/infrastructure/http/server.js`
 - `lint`: `eslint .`
 
+## Decisões da implementação dos módulos
+
+- **Repositórios com Prisma** importam a instância `prisma` de `common/infrastructure/database/prisma` direto (não a recebem pelo construtor).
+- **Operações atômicas** ficam no repositório, numa transação: criar a candidatura junto com o evento `created`, mudar o status junto com o evento `status_change` e criar um evento junto com a atualização do `updated_at` da candidatura.
+- **Campos desconhecidos** em `body` e `query` são rejeitados com 400 (`z.strictObject`).
+- **Upload de currículo**: o contrato é o `FileUploadProvider` (`resumes/domain/providers/file-upload.provider.ts`), implementado pelo `MulterFileUploadProvider` (`resumes/infrastructure/providers/multer-file-upload.provider.ts`), com `multer` em memória. O controller chama `parse(req)` e valida o resultado com `dataValidation`. Os PDFs ficam em `apps/api/storage/resumes` (pasta ignorada pelo git), com nome único gerado; o repositório de arquivos é `ResumeFileRepository`. Se a gravação no banco falhar depois de gravar o arquivo, o arquivo é apagado. Que o arquivo é um PDF é regra de negócio e é conferida no use case pela assinatura `%PDF-`.
+- **Datas**: o domínio usa `Date`; a resposta usa `YYYY-MM-DD` para datas (`applied_at`) e ISO 8601 para data/hora, convertidas no controller (`common/infrastructure/http/date.ts`).
+- **Use cases que dependem de outros módulos** (por exemplo `GetApplicationUseCase`, que lê currículos e eventos) recebem a interface do repositório do outro módulo pelo construtor, importada da camada `domain` dele. Controllers também podem importar schemas e funções de resposta de outro controller (ex.: `applicationResponseSchema`).
+
 ## Ainda não definido
 
 Decisões que o código existente não responde. Não decida sozinho: pergunte.
 
-- Framework de testes (o `pnpm test` ainda não tem o que rodar na API).
-- Como um repositório com Prisma recebe o cliente (importar `prisma` direto ou receber por construtor).
-- Como devolver ao cliente quais campos falharam na validação do Zod (hoje o erro tem só `code` e `message`).
+- Framework de testes (o `pnpm test` ainda não tem o que rodar na API). Por isso nenhum item do [api.md](../../specs/api.md) foi marcado como concluído.

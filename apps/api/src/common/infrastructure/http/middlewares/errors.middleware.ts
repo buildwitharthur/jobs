@@ -13,6 +13,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, _: NextFun
     return res.status(err.statusCode).json({
       code: err.code,
       message: err.message,
+      ...(err.details ? { details: err.details } : {}),
     });
   }
 
