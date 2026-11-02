@@ -31,6 +31,9 @@ export const formatDateTime = (iso: string) =>
     minute: "2-digit",
   });
 
+/** Data curta ("02/11/2026"), no horário local. */
+export const formatDate = (iso: string) => new Date(iso).toLocaleDateString("pt-BR");
+
 /** ISO 8601 para o valor do `<input type="datetime-local">` ("2026-11-05T10:00"), no horário local. */
 export const toDateTimeLocal = (iso: string) => {
   const date = new Date(iso);

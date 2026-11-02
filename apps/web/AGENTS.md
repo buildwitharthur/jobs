@@ -150,7 +150,13 @@ O `queryClient` também está no **contexto do router**, para os `loader` das ro
 - `routes/__root.tsx` usa `createRootRouteWithContext<RouterContext>()`, com `RouterContext = { queryClient: QueryClient }`. Por isso `context.queryClient` tem tipo em todo `loader`.
 - `main.tsx` cria o router com `context: { queryClient: undefined! }` (só um espaço reservado) e o componente `App`, que fica dentro do `QueryProvider`, injeta o cliente real: `<RouterProvider router={router} context={{ queryClient }} />`. É o padrão da documentação do TanStack Router para valores que vêm de hooks.
 
-Nenhuma rota usa `loader` por enquanto: a tela de candidaturas busca o kanban com `useSuspenseQuery` (ver "Kanban"). Se um `loader` for usado, ele chama `context.queryClient.query(...)` (o `ensureQueryData` está obsoleto no TanStack Query) com a mesma `queryKey` do hook da tela.
+Quando um `loader` é usado, ele chama `context.queryClient.query(...)` (o `ensureQueryData` está obsoleto no TanStack Query) com a mesma `queryKey` do hook da tela. A tela continua lendo pelo hook normal (`useQuery`), sem `Suspense`: o cache já vem cheio do loader.
+
+| Rota          | `loader`                                   | Tela lê com    |
+| ------------- | ------------------------------------------ | -------------- |
+| `/curriculos` | `query({ queryKey: resumesQueryKey(), queryFn: listResumes })` | `useResumes()` |
+
+A tela de candidaturas não usa `loader`: busca o kanban com `useSuspenseQuery` (ver "Kanban"). Com o `defaultPreload: "intent"` do router, passar o mouse no link de uma rota com `loader` já busca os dados.
 
 ### Avisos (`toast.provider.tsx`)
 
@@ -359,6 +365,19 @@ Regras:
 - O arrasto começa depois de 4px (`PointerSensor`), para um clique no card continuar sendo clique; o `KeyboardSensor` permite arrastar pelo teclado.
 - Quais colunas são encerradas vem do `useStatuses` (`type: "closed"`).
 - Mudanças feitas no painel de detalhe também só mexem no cache do kanban: o status move o card (`moveCard`); editar um dado ou adicionar uma nota altera o card no lugar (`updateCard`). Só o detalhe (`["applications", "detail", id]`) é buscado de novo, para trazer o histórico atualizado.
+
+## Currículos
+
+A tela de currículos (`ResumesScreen`) mostra o cabeçalho ("Nova candidatura", que abre o mesmo modal do kanban, e "Enviar PDF", que por enquanto é só o botão, sem ação) e a lista em grade, na ordem da API (`updated_at` decrescente). Sem currículos, mostra a área "Arraste um PDF aqui". Não há busca nesta tela.
+
+A tela só monta o cabeçalho e o `ResumeList`, sem ler dados.
+
+| Arquivo           | Componente   | Função                                                                                         |
+| ----------------- | ------------ | ---------------------------------------------------------------------------------------------- |
+| `resume-list.tsx` | `ResumeList` | Lê os currículos (`useResumes`, já no cache pelo loader), mostra o estado vazio e repassa cada currículo ao card |
+| `resume-card.tsx` | `ResumeCard` | Nome, descrição, link do PDF (nova aba, `getResumeFileUrl`), "Atualizado em" e "Usado em N candidaturas" |
+
+Ainda faltam: edição no lugar do nome e da descrição, expandir "usado em", excluir, arrastar PDF (criar e trocar) e a ação do "Enviar PDF".
 
 ## Componentes base (`common/components/ui/`)
 
