@@ -28,6 +28,13 @@ Leia sempre o `overview.md` primeiro. Depois leia os documentos relacionados à 
 5. **Não amplie o escopo.** Implemente só o que foi pedido e o que está documentado. Respeite a seção "Fora do escopo" do `overview.md`.
 6. **Mantenha a documentação atualizada.** Quando uma decisão nova for tomada, atualize o documento correspondente em `specs/` junto com o código. A documentação é a fonte da verdade.
 7. **Use o checklist da API.** Ao implementar uma rota de [specs/api.md](specs/api.md), implemente também os testes listados e marque o item como concluído (`[x]`) só quando a rota e todos os testes dela estiverem prontos e passando.
+8. **Valide depois de cada feature.** Ao terminar uma feature (ou qualquer mudança de código), rode na raiz os scripts abaixo e só considere a tarefa concluída quando todos passarem:
+   - `pnpm lint`: ESLint em todos os apps
+   - `pnpm format:check`: checagem do Prettier
+   - `pnpm build`: compila o TypeScript e pega erros de tipo
+   - `pnpm test`: testes de todos os apps
+
+   Se algum falhar, corrija a causa antes de seguir. Não desative regras, não ignore arquivos e não pule testes só para passar. Se não conseguir corrigir, ou se um erro já existia antes da sua mudança, avise e pergunte. Informe no final quais scripts rodou e o resultado de cada um. Se um script não existir ou não puder rodar (por exemplo, ainda não há testes), diga isso em vez de omitir.
 
 ## Quando houver conflito
 

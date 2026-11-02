@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { OpenAPIRegistry, OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
-import { errorHandler } from "./middleware/errors.middleware.js";
+import { errorHandler } from "./middlewares/errors.middleware.js";
 import { routes } from "./route.js";
 
 const app = express();

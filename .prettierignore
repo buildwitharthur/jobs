@@ -5,3 +5,4 @@ pnpm-lock.yaml
 storage
 specs
 AGENTS.md
+**/generated

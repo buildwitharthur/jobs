@@ -12,6 +12,7 @@ Decisões de tecnologia do projeto. Só entra aqui o que foi decidido.
 
 - Express com TypeScript
 - Zod para validação
+- Prisma 7 (7.10.1) com PostgreSQL, usando o driver adapter `@prisma/adapter-pg`
 - Swagger para documentar as rotas: documento OpenAPI gerado a partir dos schemas Zod (`@asteasolutions/zod-to-openapi`) e exibido com `swagger-ui-express`
   - UI: `GET /docs`
   - JSON: `GET /openapi.json`
@@ -27,6 +28,14 @@ apps/api/src/common/
     ├── route.ts                          # Router raiz com as rotas da API
     └── middleware/errors.middleware.ts   # errorHandler
 ```
+
+### Banco de dados (Prisma)
+
+- Schema: `apps/api/prisma/schema.prisma`; configuração do CLI: `apps/api/prisma7.config.ts` (nome usado pelo Prisma 7.10+).
+- Cliente gerado em `apps/api/src/database/prisma/generated` (não versionado; gere com `pnpm exec prisma generate --config prisma7.config.ts` dentro de `apps/api`).
+- Instância do cliente: `apps/api/src/database/prisma/index.ts`, que exporta `prisma`.
+- Conexão pela variável `DATABASE_URL` em `apps/api/.env` (carregada com `dotenv`).
+- O Prisma 7 exige driver adapter e não gera o cliente automaticamente em `migrate dev`.
 
 ### Comportamento da base
 
