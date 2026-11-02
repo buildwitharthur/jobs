@@ -1,10 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { handleMutationError } from "../../../common/utils/api-error";
+import { resumesQueryKey } from "../../resumes/hooks/use-resumes";
+import type { ListResumesResponse } from "../../resumes/http/list-resumes.http";
 import type { GetApplicationResponse } from "../http/get-application.http";
+import type { GetBoardResponse } from "../http/get-board.http";
 import { updateApplication, type UpdateApplicationBody } from "../http/update-application.http";
+import { updateCard } from "../utils/board";
+import { applicationQueryKey } from "./use-application";
+import { boardQueryKey } from "./use-board";
 import {
   updateApplicationSchema,
   type UpdateApplicationField,
@@ -39,11 +45,30 @@ export const useUpdateApplicationForm = (application: GetApplicationResponse | u
     resetOptions: { keepDirtyValues: true },
   });
 
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: updateApplication,
     onError: handleMutationError,
-    onSuccess: () => {
-      // Configurado, ainda sem ação (ex.: atualizar o cache, mostrar o sinal de "salvo").
+    onSuccess: (updated) => {
+      // O card do kanban mostra alguns desses dados: atualiza no cache, sem buscar o kanban.
+      const resumeName =
+        queryClient
+          .getQueryData<ListResumesResponse>(resumesQueryKey())
+          ?.find((resume) => resume.id === updated.resume_id)?.name ?? null;
+      queryClient.setQueryData<GetBoardResponse>(boardQueryKey(), (board) =>
+        board
+          ? updateCard(board, updated.id, (card) => ({
+              ...card,
+              company: updated.company,
+              role: updated.role,
+              applied_at: updated.applied_at,
+              work_model: updated.work_model,
+              resume_name: resumeName,
+            }))
+          : board,
+      );
+      void queryClient.invalidateQueries({ queryKey: applicationQueryKey(updated.id) });
     },
   });
 

@@ -5,13 +5,17 @@ import { cn } from "../../../common/utils/cn";
 import { formatDateTime, relativeTime } from "../../../common/utils/date";
 import type { BoardCard as BoardCardData, Status } from "../utils/board";
 import { findWorkModel } from "../utils/work-models";
+import { ApplicationSheet } from "./application-sheet";
 
 type BoardCardProps = {
   card: BoardCardData;
   status: Status;
 };
 
-/** Card de uma candidatura no kanban (design.md: application-card). Arrastável. */
+/**
+ * Card de uma candidatura no kanban (design.md: application-card). Arrastável; um clique abre o
+ * painel de detalhe.
+ */
 export function BoardCard({ card, status }: BoardCardProps) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({
     id: card.id,
@@ -19,14 +23,20 @@ export function BoardCard({ card, status }: BoardCardProps) {
   });
 
   return (
-    <CardBody
-      ref={setNodeRef}
-      card={card}
-      status={status}
-      className={cn(isDragging && "opacity-40")}
-      {...attributes}
-      {...listeners}
-    />
+    <ApplicationSheet card={card}>
+      <CardBody
+        ref={setNodeRef}
+        card={card}
+        status={status}
+        // Com o painel aberto, o card fica marcado (design.md: card aberto).
+        className={cn(
+          "data-[state=open]:ring-primary data-[state=open]:ring-2",
+          isDragging && "opacity-40",
+        )}
+        {...attributes}
+        {...listeners}
+      />
+    </ApplicationSheet>
   );
 }
 

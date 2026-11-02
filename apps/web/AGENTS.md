@@ -313,7 +313,7 @@ const form = useCreateEventForm(applicationId);
 Regras:
 
 - **Erros de validação dos campos** vêm do `formState.errors`, do schema do Zod. Os erros da **API** não vão para os campos: caem no `onError` da mutation, que mostra um **toast de erro** com a mensagem da API (`handleMutationError`, em `common/utils/api-error.ts`).
-- O **`onSuccess`** de cada mutation já está configurado, mas **ainda sem ação** (só um comentário do que virá: atualizar o cache, fechar o modal, limpar o campo, avisar).
+- O **`onSuccess`** de cada mutation já está configurado. Os do painel de detalhe (`useUpdateApplicationForm`, `useCreateEventForm`, `useUpdateEventForm`) atualizam o card no cache do kanban (`updateCard`) e mandam buscar o detalhe de novo (`refreshApplication`, em `utils/application-cache.ts`, para os eventos); os outros ainda estão **sem ação** (só um comentário do que virá).
 - Um `submit` que falha na API não gera erro não tratado: `createSubmit` (`common/utils/submit.ts`) engole o erro repassado pelo `handleSubmit`, que já foi tratado no `onError`.
 - **Edição no lugar** (`useUpdateApplicationForm`, `useUpdateResumeForm`): em vez de `submit`, devolvem `saveField(nome)`, que valida e salva **um campo**, só se ele mudou, e se a validação passar. Quem chama é o componente, ao sair do campo (`onBlur`) ou com `Enter`. O hook guarda o último valor salvo de cada campo.
 - Funções que montam valores e corpos da requisição (`toApplicationBody`, `applicationFormDefaults`...) ficam em `utils/application-form.ts`.
@@ -323,11 +323,21 @@ Regras:
 | `useCreateApplicationForm()`        | Nova candidatura (modal)                           | `createApplication` | `applications` |
 | `useUpdateApplicationForm(application)` | Edição no lugar no painel de detalhe (`saveField`) | `updateApplication` | `applications` |
 | `useCreateEventForm(applicationId)` | "Adicionar nota" do histórico                      | `createEvent`     | `applications` |
-| `useUpdateEventForm(applicationId, event)` | Editar nota e data de um evento             | `updateEvent`     | `applications` |
+| `useUpdateEventForm(applicationId, event, onSaved?)` | Editar nota e data de um evento (`onSaved` fecha a edição) | `updateEvent`     | `applications` |
 | `useCreateResumeForm()`             | Novo currículo (nome, descrição e PDF)             | `createResume`    | `resumes`      |
 | `useUpdateResumeForm(resume)`       | Edição no lugar do nome e da descrição (`saveField`) | `updateResume`    | `resumes`      |
 
-Mudar o status tem o hook `useChangeApplicationStatus()` (sem formulário; ver "Kanban"). Ainda **sem** hook de mutação ou formulário: excluir (candidatura, evento, currículo) e trocar o PDF de um currículo. Não têm campos de formulário e entram quando forem pedidos.
+Mutações sem formulário (um hook cada, em `hooks/`):
+
+| Hook                            | Ação                                   | Cache                                                                    | Módulo         |
+| ------------------------------- | -------------------------------------- | ------------------------------------------------------------------------ | -------------- |
+| `useChangeApplicationStatus()`  | Mudar o status (kanban e painel)       | Move o card no kanban e o status no detalhe na hora; desfaz se falhar     | `applications` |
+| `useDeleteApplication()`        | Excluir a candidatura                  | Tira o card do kanban (o painel fecha junto), apaga o detalhe e busca de novo os currículos (contagem "usado em") | `applications` |
+| `useDeleteEvent()`              | Excluir um evento                      | `refreshApplication`                                                     | `applications` |
+| `useDeleteResume()`             | Excluir um currículo                   | Tira da lista de currículos                                              | `resumes`      |
+| `useReplaceResumeFile()`        | Trocar o PDF de um currículo           | Troca o currículo na lista                                               | `resumes`      |
+
+A confirmação em dois cliques das exclusões é o `ConfirmButton` (`modules/applications/components/confirm-button.tsx`): o primeiro clique arma ("Confirmar exclusão?"), o segundo executa; desarma em 4 segundos ou ao perder o foco.
 
 ## Kanban
 
@@ -337,7 +347,9 @@ A tela de candidaturas (`ApplicationsScreen`) mostra o cabeçalho e o kanban. O 
 | ------------------ | -------------------------------- | -------------------------------------------------------------------------- |
 | `board.tsx`        | `Board`, `BoardSkeleton`         | Lê o kanban (`useBoard`), cuida do arrasto (`DndContext`, `DragOverlay`) e de quais colunas encerradas estão abertas; `BoardSkeleton` é o formato do kanban enquanto carrega |
 | `board-column.tsx` | `BoardColumn`                    | Uma coluna (`useDroppable`, id = `status`): aberta ou recolhida (encerradas) |
-| `board-card.tsx`   | `BoardCard`, `BoardCardOverlay`  | O card (`useDraggable`, id = `id` da candidatura) e a cópia que acompanha o ponteiro |
+| `board-card.tsx`   | `BoardCard`, `BoardCardOverlay`  | O card (`useDraggable`, id = `id` da candidatura) e a cópia que acompanha o ponteiro. Um clique abre o `ApplicationSheet` |
+
+O painel de detalhe fica em `application-sheet.tsx` (`ApplicationSheet`, com o cabeçalho e os dados) e `application-history.tsx` (`ApplicationHistory`, com "Adicionar nota" e os eventos). Como o modal, o `ApplicationSheet` recebe o card e o gatilho (`children`) e abre e fecha sozinho, sem estado de fora; o detalhe (`useApplication`) só é buscado quando ele abre.
 
 Regras:
 
@@ -346,6 +358,7 @@ Regras:
 - Soltar na mesma coluna não chama a API. O aviso de mudança tem **Desfazer**, que muda o status de volta pelo mesmo hook.
 - O arrasto começa depois de 4px (`PointerSensor`), para um clique no card continuar sendo clique; o `KeyboardSensor` permite arrastar pelo teclado.
 - Quais colunas são encerradas vem do `useStatuses` (`type: "closed"`).
+- Mudanças feitas no painel de detalhe também só mexem no cache do kanban: o status move o card (`moveCard`); editar um dado ou adicionar uma nota altera o card no lugar (`updateCard`). Só o detalhe (`["applications", "detail", id]`) é buscado de novo, para trazer o histórico atualizado.
 
 ## Componentes base (`common/components/ui/`)
 

@@ -1,13 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { handleMutationError } from "../../../common/utils/api-error";
 import { createSubmit } from "../../../common/utils/submit";
 import { createEvent } from "../http/create-event.http";
 import { createEventSchema, type CreateEventFormValues } from "../schemas/create-event.schema";
+import { refreshApplication } from "../utils/application-cache";
 
 /** Campo "Adicionar nota" do histórico da candidatura. */
 export const useCreateEventForm = (applicationId: number | undefined) => {
+  const queryClient = useQueryClient();
+
   const form = useForm<CreateEventFormValues>({
     resolver: zodResolver(createEventSchema),
     defaultValues: { note: "", occurred_at: "" },
@@ -16,8 +19,9 @@ export const useCreateEventForm = (applicationId: number | undefined) => {
   const mutation = useMutation({
     mutationFn: createEvent,
     onError: handleMutationError,
-    onSuccess: () => {
-      // Configurado, ainda sem ação (ex.: atualizar o histórico, limpar o campo).
+    onSuccess: (event) => {
+      form.reset();
+      return refreshApplication(queryClient, event.application_id);
     },
   });
 

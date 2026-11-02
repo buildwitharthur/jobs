@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { handleMutationError } from "../../../common/utils/api-error";
@@ -11,11 +11,17 @@ import {
   createUpdateEventSchema,
   type UpdateEventFormValues,
 } from "../schemas/update-event.schema";
+import { refreshApplication } from "../utils/application-cache";
 
 type ApplicationEvent = GetApplicationResponse["events"][number];
 
-/** Edição da nota e da data de um evento do histórico. */
-export const useUpdateEventForm = (applicationId: number, event: ApplicationEvent) => {
+/** Edição da nota e da data de um evento do histórico. `onSaved` roda depois de salvar. */
+export const useUpdateEventForm = (
+  applicationId: number,
+  event: ApplicationEvent,
+  onSaved?: () => void,
+) => {
+  const queryClient = useQueryClient();
   const schema = useMemo(() => createUpdateEventSchema(event.type), [event.type]);
 
   const form = useForm<UpdateEventFormValues>({
@@ -26,8 +32,9 @@ export const useUpdateEventForm = (applicationId: number, event: ApplicationEven
   const mutation = useMutation({
     mutationFn: updateEvent,
     onError: handleMutationError,
-    onSuccess: () => {
-      // Configurado, ainda sem ação (ex.: atualizar o histórico, fechar a edição).
+    onSuccess: async () => {
+      await refreshApplication(queryClient, applicationId);
+      onSaved?.();
     },
   });
 
