@@ -7,6 +7,7 @@ Decisões de tecnologia do projeto. Só entra aqui o que foi decidido.
 - pnpm (workspaces) + Turborepo
 - Workspaces: `apps/*`
 - Raiz: ESLint (com typescript-eslint), Prettier (com prettier-plugin-tailwindcss) e EditorConfig, compartilhados pelos apps
+- Ambiente local: Docker Compose (`compose.yaml` na raiz) com PostgreSQL 18 Alpine, banco `jobs` e volume persistente `postgres_data`; as variáveis do contêiner são lidas de `apps/api/.env`.
 
 ## API (`apps/api`)
 
@@ -22,19 +23,21 @@ Decisões de tecnologia do projeto. Só entra aqui o que foi decidido.
 ```
 apps/api/src/common/
 ├── domain/errors/app-error.ts            # AppError (message, statusCode, code)
-└── infrastructure/http/
-    ├── server.ts                         # sobe o servidor (PORT, padrão 3000)
-    ├── app.ts                            # Express: cors, json, docs, rotas, errorHandler
-    ├── route.ts                          # Router raiz com as rotas da API
-    └── middleware/errors.middleware.ts   # errorHandler
+└── infrastructure/
+    ├── database/prisma/index.ts           # instância compartilhada do Prisma Client
+    └── http/
+        ├── server.ts                      # sobe o servidor (PORT, padrão 3000)
+        ├── app.ts                         # Express: cors, json, docs, rotas, errorHandler
+        ├── route.ts                       # Router raiz com as rotas da API
+        └── middleware/errors.middleware.ts # errorHandler
 ```
 
 ### Banco de dados (Prisma)
 
 - Schema: `apps/api/prisma/schema.prisma`; configuração do CLI: `apps/api/prisma7.config.ts` (nome usado pelo Prisma 7.10+).
-- Cliente gerado em `apps/api/src/database/prisma/generated` (não versionado; gere com `pnpm exec prisma generate --config prisma7.config.ts` dentro de `apps/api`).
-- Instância do cliente: `apps/api/src/database/prisma/index.ts`, que exporta `prisma`.
-- Conexão pela variável `DATABASE_URL` em `apps/api/.env` (carregada com `dotenv`).
+- Cliente gerado em `apps/api/src/common/infrastructure/database/prisma/generated` (não versionado; gere com `pnpm exec prisma generate --config prisma7.config.ts` dentro de `apps/api`).
+- Instância do cliente: `apps/api/src/common/infrastructure/database/prisma/index.ts`, que exporta `prisma`.
+- Conexão pela variável `DATABASE_URL` em `apps/api/.env` (carregada com `dotenv`); exemplo versionado em `apps/api/.env.example`.
 - O Prisma 7 exige driver adapter e não gera o cliente automaticamente em `migrate dev`.
 
 ### Comportamento da base
