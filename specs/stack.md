@@ -32,6 +32,18 @@ apps/api/src/common/
         └── middleware/errors.middleware.ts # errorHandler
 ```
 
+Os módulos da API ficam em `apps/api/src/modules/`, uma pasta por módulo, seguindo as seções do [api.md](api.md):
+
+```
+apps/api/src/modules/
+├── statuses/       # lista fixa de status
+├── applications/   # candidaturas
+├── events/         # histórico das candidaturas
+├── board/          # kanban
+├── resumes/        # currículos
+└── dashboard/      # painel com resumo geral
+```
+
 ### Banco de dados (Prisma)
 
 - Schema: `apps/api/prisma/schema.prisma`; configuração do CLI: `apps/api/prisma7.config.ts` (nome usado pelo Prisma 7.10+).
