@@ -393,14 +393,6 @@ a:hover {
   flex: 1;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 0 var(--space-xl) var(--space-md);
-}
-
 .content {
   flex: 1;
   min-height: 0;
@@ -518,60 +510,6 @@ a:hover {
   color: var(--color-on-primary);
 }
 
-/* Alternador Kanban / Lista */
-.segmented {
-  display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--rounded-md);
-  background: var(--color-surface);
-}
-
-.segmented__item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xxs);
-  height: var(--control-sm);
-  padding: 0 var(--space-sm);
-  border: 0;
-  border-radius: var(--rounded-sm);
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.segmented__item[aria-pressed="true"] {
-  background: var(--color-primary-subtle);
-  color: var(--color-primary-subtle-text);
-}
-
-/* Chips de filtro */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: var(--control-sm);
-  padding: 0 var(--space-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--rounded-md);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.chip:hover {
-  background: var(--color-surface-sunken);
-}
-
-.chip[aria-pressed="true"] {
-  border-color: var(--color-primary);
-  background: var(--color-primary-subtle);
-  color: var(--color-primary-subtle-text);
-}
-
 /* ==========================================================================
    Campos
    ========================================================================== */
@@ -659,15 +597,6 @@ a:hover {
 .search .kbd {
   position: absolute;
   right: 8px;
-}
-
-.filter-label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
 }
 
 /* Campo editável no lugar (inline-field) */
@@ -862,21 +791,6 @@ select.inline {
   white-space: nowrap;
 }
 
-.quick-add {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xxs);
-  padding: var(--space-xs);
-  margin: 0 var(--space-xs) var(--space-xs);
-  border-radius: var(--rounded-md);
-  background: var(--color-surface);
-  box-shadow: var(--elevation-raised);
-}
-
-.quick-add__hint {
-  color: var(--color-text-secondary);
-}
-
 .card {
   position: relative;
   display: flex;
@@ -948,78 +862,6 @@ select.inline {
 }
 
 .card__meta .icon {
-  width: 12px;
-  height: 12px;
-}
-
-/* ==========================================================================
-   Lista
-   ========================================================================== */
-
-.table-wrap {
-  border: 1px solid var(--color-border);
-  border-radius: var(--rounded-lg);
-  background: var(--color-surface);
-  overflow: hidden;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th {
-  padding: var(--space-xs) var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.table td {
-  padding: var(--space-xs) var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.table tbody tr {
-  cursor: pointer;
-  transition: background var(--motion-fast);
-}
-
-.table tbody tr:hover {
-  background: var(--color-bg);
-}
-
-.table tbody tr.is-open {
-  background: var(--color-primary-subtle);
-}
-
-.sort {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.sort[aria-sort="ascending"],
-.sort[aria-sort="descending"] {
-  color: var(--color-text-primary);
-}
-
-.sort .icon {
   width: 12px;
   height: 12px;
 }

@@ -12,7 +12,7 @@ export const inputVariants = tv({
   ],
   variants: {
     variant: {
-      // Campo de formulário (modal, filtros).
+      // Campo de formulário (modal, busca).
       field: [
         "h-control-md rounded-md border border-border-input bg-surface px-sm",
         "focus:border-primary focus:ring-2 focus:ring-focus focus:outline-none",

@@ -40,7 +40,7 @@ apps/web/
 │   │   ├── lib/             # api-client.ts (axios) e api-schema.d.ts (tipos gerados da API)
 │   │   └── utils/           # cn.ts (cn e tv)
 │   ├── modules/             # um módulo por área do app, como no ui.md
-│   │   ├── applications/    # Candidaturas: kanban, lista, detalhe e nova candidatura
+│   │   ├── applications/    # Candidaturas: kanban, detalhe e nova candidatura
 │   │   ├── resumes/         # Currículos
 │   │   └── dashboard/       # Painel
 │   │       # cada módulo tem: http/, hooks/, schemas/, screens/, components/, utils/
@@ -88,16 +88,22 @@ Todas as rotas do app (o detalhe da candidatura e o modal de nova candidatura n�
 | ---------------- | ---------------------------- | --------------------------------------- |
 | `/`              | `routes/index.tsx`           | Redireciona para `/candidaturas`        |
 | (layout)         | `routes/_shell.tsx`          | `ShellLayout`: layout das páginas abaixo (sem caminho na URL) |
-| `/candidaturas`  | `routes/_shell/candidaturas.tsx` | `ApplicationsScreen` (kanban e lista) |
+| `/candidaturas`  | `routes/_shell/candidaturas.tsx` | `ApplicationsScreen` (kanban)          |
 | `/curriculos`    | `routes/_shell/curriculos.tsx` | `ResumesScreen`                       |
 | `/painel`        | `routes/_shell/painel.tsx`   | `DashboardScreen`                       |
 | qualquer outro   | `routes/__root.tsx`          | Redireciona para `/candidaturas`        |
 
-Os parâmetros de URL (filtros, visualização, painel de detalhe) estão em [ui.md](../../specs/design/ui.md#navegação). As rotas ainda não validam nenhum parâmetro.
+Os parâmetros de URL (busca e painel de detalhe) estão em [ui.md](../../specs/design/ui.md#navegação). As rotas ainda não validam nenhum parâmetro.
 
 ### Layout `_shell`
 
-As páginas do app ficam dentro da rota de layout **`_shell`**, que não tem caminho na URL (rota *pathless* do TanStack Router): o layout fica em `routes/_shell.tsx` e as páginas em `routes/_shell/`. O componente do layout é o `ShellLayout`, em `common/components/layouts/shell.layout.tsx`. Por enquanto ele só renderiza o `<Outlet />` (a página atual); o menu lateral e o cabeçalho entram nele depois.
+As páginas do app ficam dentro da rota de layout **`_shell`**, que não tem caminho na URL (rota *pathless* do TanStack Router): o layout fica em `routes/_shell.tsx` e as páginas em `routes/_shell/`. O componente do layout é o `ShellLayout`, em `common/components/layouts/shell/shell.layout.tsx`, igual ao `.app` do protótipo:
+
+- **Menu lateral** (`<nav>`, largura `w-nav`): logo (link para `/candidaturas`, `logo-on-dark.svg` no tema escuro e `logo.svg` no claro), os três itens do [ui.md](../../specs/design/ui.md#navegação) (o da página atual fica destacado) e, no rodapé, o botão **Usar tema claro / Usar tema escuro**.
+- **`<main id="main">`**: a página atual (`<Outlet />`), que ocupa a altura da tela; cada tela cuida do próprio cabeçalho e da rolagem. Por isso as telas não usam `<main>`.
+- O tema é trocado pelo hook `useTheme` (`common/hooks/use-theme.ts`): muda o `data-theme` do `<html>`, o `theme-color` e salva em `candidaturas-theme`.
+
+O rodapé do menu no protótipo também tem a nota "Protótipo com dados de exemplo..." e o botão "Restaurar dados de exemplo". Os dois são do protótipo (dados em memória) e não entram no app.
 
 ### Padrão: uma tela por página
 
@@ -146,7 +152,7 @@ O `queryClient` também está no **contexto do router**, para os `loader` das ro
 ```tsx
 // src/routes/candidaturas.tsx (exemplo de uso no loader)
 export const Route = createFileRoute("/candidaturas")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(applicationsQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(boardQueryOptions),
   component: ApplicationsScreen,
 });
 ```
@@ -174,12 +180,11 @@ Para usar os tipos:
 ```ts
 import type { paths } from "../common/lib/api-schema";
 
-// Resposta 200 de GET /applications
-type ListApplicationsResponse =
-  paths["/applications"]["get"]["responses"][200]["content"]["application/json"];
+// Resposta 200 de GET /board
+type GetBoardResponse = paths["/board"]["get"]["responses"][200]["content"]["application/json"];
 
-// Query de GET /applications
-type ListApplicationsQuery = NonNullable<paths["/applications"]["get"]["parameters"]["query"]>;
+// Query de GET /board
+type GetBoardQuery = NonNullable<paths["/board"]["get"]["parameters"]["query"]>;
 
 // Corpo de POST /applications
 type CreateApplicationBody = NonNullable<
@@ -206,56 +211,55 @@ As chamadas ficam em `modules/<module>/http/`, não nas telas.
 
 ### Chamadas à API (`modules/<module>/http/`)
 
-Cada chamada à API é **um arquivo**, em `modules/<module>/http/<verbo>-<entidade>.http.ts` (ex.: `list-applications.http.ts`), que usa o `apiClient` e os tipos de `api-schema.d.ts`. Cada arquivo exporta:
+Cada chamada à API é **um arquivo**, em `modules/<module>/http/<verbo>-<entidade>.http.ts` (ex.: `get-board.http.ts`), que usa o `apiClient` e os tipos de `api-schema.d.ts`. Cada arquivo exporta:
 
-- a **função** da chamada, no formato `<verbo><Entidade>` (`listApplications`), que devolve só o corpo da resposta (`data`);
+- a **função** da chamada, no formato `<verbo><Entidade>` (`getBoard`), que devolve só o corpo da resposta (`data`);
 - os **tipos** dela, derivados do `api-schema.d.ts`: `<Nome>Query`, `<Nome>Body`, `<Nome>Response` e `<Nome>Variables` (quando existem).
 
 ```ts
-// modules/applications/http/list-applications.http.ts
-type Operation = paths["/applications"]["get"];
+// modules/applications/http/get-board.http.ts
+type Operation = paths["/board"]["get"];
 
-export type ListApplicationsQuery = NonNullable<Operation["parameters"]["query"]>;
-export type ListApplicationsResponse = Operation["responses"][200]["content"]["application/json"];
+export type GetBoardQuery = NonNullable<Operation["parameters"]["query"]>;
+export type GetBoardResponse = Operation["responses"][200]["content"]["application/json"];
 
-export const listApplications = async (query?: ListApplicationsQuery) => {
-  const { data } = await apiClient.get<ListApplicationsResponse>("/applications", { params: query });
+export const getBoard = async (query?: GetBoardQuery) => {
+  const { data } = await apiClient.get<GetBoardResponse>("/board", { params: query });
   return data;
 };
 ```
 
 Regras:
 
-- **Consultas** (GET) recebem os parâmetros diretamente: `getApplication(id)`, `listApplications(query)`.
+- **Consultas** (GET) recebem os parâmetros diretamente: `getApplication(id)`, `getBoard(query)`.
 - **Mutações** (POST, PATCH, PUT, DELETE) recebem **um único argumento**, que é o que o `mutationFn` do TanStack Query entrega: o corpo (`createApplication(body)`), o `id` (`deleteApplication(id)`) ou um objeto `Variables` quando há `id` e corpo (`updateApplication({ id, body })`, `updateEvent({ applicationId, eventId, body })`).
 - Upload de arquivo (`createResume`, `replaceResumeFile`) recebe um `File` e monta o `FormData`. O OpenAPI descreve o arquivo como `string`; o tipo da função usa `File`.
 - As funções **não tratam erro**: o interceptor do `apiClient` já rejeita, e o erro (`AxiosError`, com o corpo da API em `error.response.data`) sobe para o `onError` da mutation ou o `error` da query.
-- Chamada usada por mais de um módulo fica **uma vez só**, no módulo do recurso, e os outros a importam: `getStatuses` fica em `applications/http` (o painel também a usa) e `listResumes` em `resumes/http` (os filtros e seletores de currículo das candidaturas também a usam).
+- Chamada usada por mais de um módulo fica **uma vez só**, no módulo do recurso, e os outros a importam: `getStatuses` fica em `applications/http` (o painel também a usa) e `listResumes` em `resumes/http` (os seletores de currículo das candidaturas também a usam).
 - Abrir o PDF de um currículo não é uma chamada do axios: `getResumeFileUrl(id)` só monta o endereço (`GET /resumes/:id/file`) com a `baseURL` do `apiClient`, para o navegador abrir.
 
 Chamadas existentes (as que o [ui.md](../../specs/design/ui.md) usa):
 
 | Módulo         | Arquivos em `http/`                                                                                                                                                                                              |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `applications` | `get-board`, `list-applications`, `get-application`, `create-application`, `update-application`, `change-application-status`, `delete-application`, `create-event`, `update-event`, `delete-event`, `get-statuses` |
+| `applications` | `get-board`, `get-application`, `create-application`, `update-application`, `change-application-status`, `delete-application`, `create-event`, `update-event`, `delete-event`, `get-statuses` |
 | `resumes`      | `list-resumes`, `create-resume`, `update-resume`, `replace-resume-file`, `list-resume-applications`, `delete-resume`, `get-resume-file-url`                                                                         |
 | `dashboard`    | `get-dashboard`                                                                                                                                                                                                  |
 
-Rotas da API que o `ui.md` não usa ficaram de fora: `GET /applications/:id/events` (o detalhe da candidatura já traz o histórico) e `GET /resumes/:id`.
+Rotas da API que o `ui.md` não usa ficaram de fora: `GET /applications` (a interface só tem o kanban, que usa o `GET /board`), `GET /applications/:id/events` (o detalhe da candidatura já traz o histórico) e `GET /resumes/:id`.
 
 ### Hooks de consulta (`modules/<module>/hooks/`)
 
 Cada consulta (GET) tem **um hook**, em `modules/<module>/hooks/use-<nome>.ts`, que embrulha a chamada de `http/` com o `useQuery`. O arquivo exporta o hook e a **`queryKey`** dele, juntos:
 
 ```ts
-// modules/applications/hooks/use-applications.ts
-export const applicationsQueryKey = (query?: ListApplicationsQuery) =>
-  ["applications", "list", query] as const;
+// modules/applications/hooks/use-board.ts
+export const boardQueryKey = (query?: GetBoardQuery) => ["board", query] as const;
 
-export const useApplications = (query?: ListApplicationsQuery) =>
+export const useBoard = (query?: GetBoardQuery) =>
   useQuery({
-    queryKey: applicationsQueryKey(query),
-    queryFn: () => listApplications(query),
+    queryKey: boardQueryKey(query),
+    queryFn: () => getBoard(query),
   });
 ```
 
@@ -263,14 +267,13 @@ Regras:
 
 - O hook é o mais simples possível: `queryKey` e `queryFn`, sem opções extras, e devolve o resultado do `useQuery` como está. Só há duas exceções: `useStatuses` tem `staleTime: Infinity` (a lista de status é fixa no código da API) e `useApplication` e `useResumeApplications` só buscam quando recebem um `id` (`enabled`).
 - A `queryKey` é uma função (`<nome>QueryKey(...)`) exportada para quem precisar invalidar ou ler o cache. Os parâmetros da consulta fazem parte da chave.
-- As chaves começam pelo recurso, do mais geral ao mais específico: `["applications", "list", query]`, `["applications", "detail", id]`, `["resumes", "list"]`, `["resumes", "applications", id]`. Assim invalidar `["applications"]` atinge a lista e os detalhes.
+- As chaves começam pelo recurso, do mais geral ao mais específico: `["board", query]`, `["applications", "detail", id]`, `["resumes", "list"]`, `["resumes", "applications", id]`. Assim invalidar `["applications"]` atinge todos os detalhes.
 - Hook usado por mais de um módulo fica uma vez só, no módulo do recurso (como as chamadas): `useStatuses` em `applications` (o painel também o usa) e `useResumes` em `resumes`.
 - **Só consultas por enquanto**: as mutações (`useMutation`) ainda não foram escritas.
 
 | Hook                       | Chamada                | `queryKey`                              | Módulo         |
 | -------------------------- | ---------------------- | --------------------------------------- | -------------- |
 | `useBoard(query?)`         | `getBoard`             | `["board", query]`                      | `applications` |
-| `useApplications(query?)`  | `listApplications`     | `["applications", "list", query]`       | `applications` |
 | `useApplication(id)`       | `getApplication`       | `["applications", "detail", id]`        | `applications` |
 | `useStatuses()`            | `getStatuses`          | `["statuses"]`                          | `applications` |
 | `useResumes()`             | `listResumes`          | `["resumes", "list"]`                   | `resumes`      |
@@ -325,7 +328,6 @@ Regras:
 | Hook                                | Formulário                                         | Mutation          | Módulo         |
 | ----------------------------------- | -------------------------------------------------- | ----------------- | -------------- |
 | `useCreateApplicationForm()`        | Nova candidatura (modal)                           | `createApplication` | `applications` |
-| `useQuickCreateApplicationForm(status)` | "+" da coluna do kanban (empresa e cargo)      | `createApplication` | `applications` |
 | `useUpdateApplicationForm(application)` | Edição no lugar no painel de detalhe (`saveField`) | `updateApplication` | `applications` |
 | `useCreateEventForm(applicationId)` | "Adicionar nota" do histórico                      | `createEvent`     | `applications` |
 | `useUpdateEventForm(applicationId, event)` | Editar nota e data de um evento             | `updateEvent`     | `applications` |
@@ -349,7 +351,6 @@ Os componentes primitivos ficam em `src/common/components/ui/`, com o visual do 
 | `sheet.tsx`         | `Sheet`, `SheetTrigger`, `SheetContent`, `SheetTitle`, `SheetDescription`, `SheetClose` | Radix Dialog | Painel lateral (detalhe da candidatura), sem escurecer o fundo |
 | `select.tsx`        | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`, `SelectGroup` | Radix Select | Status, currículo, modelo de trabalho                         |
 | `tooltip.tsx`       | `Tooltip`                                                               | Radix Tooltip        | Dica em botão só com ícone e em botão desabilitado            |
-| `toggle-group.tsx`  | `ToggleGroup`, `ToggleGroupItem`                                        | Radix Toggle Group   | Alternador Kanban/Lista (`type="single"`) e chips de status (`type="multiple"`) |
 | `collapsible.tsx`   | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`             | Radix Collapsible    | "Mais detalhes" do modal, "Usado em N candidaturas"           |
 
 Regras:

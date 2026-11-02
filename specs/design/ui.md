@@ -12,7 +12,7 @@ O objetivo principal é **fazer as tarefas do dia a dia com o menor número de c
 2. **Detalhe em painel lateral, não em outra página.** Clicar numa candidatura abre um painel sobre a tela atual. O usuário não perde o contexto e fecha com `Esc`. O painel tem URL própria (ex.: `?application=12`), então voltar do navegador e recarregar funcionam.
 3. **Edição no lugar.** Clicar num campo já permite editar; ele salva sozinho ao sair do campo ou com `Enter`. Não existe botão "Editar" nem "Salvar".
 4. **Só o essencial é obrigatório.** Para criar uma candidatura bastam empresa e cargo. O resto fica em "Mais detalhes", recolhido.
-5. **Valores padrão que acertam na maioria das vezes.** Data da candidatura = hoje. Status = o da coluna onde ela foi criada. Currículo = o último usado.
+5. **Valores padrão que acertam na maioria das vezes.** Data da candidatura = hoje. Status = Inscrito. Currículo = o último usado.
 6. **Arrastar é mudar de status.** Sem confirmação, porque a ação é reversível. Um aviso rápido permite desfazer.
 7. **Confirmação só para o que não volta.** Excluir candidatura, evento ou currículo e trocar o PDF pedem confirmação, sem modal: o botão vira "Confirmar exclusão?" e um segundo clique confirma.
 8. **Teclado como atalho, nunca como obrigação.** Tudo funciona com o mouse; os atalhos só aceleram.
@@ -26,7 +26,7 @@ Três itens fixos no menu:
 
 | Item           | Rota da tela  | Conteúdo                                     |
 | -------------- | ------------- | -------------------------------------------- |
-| **Candidaturas** | `/candidaturas` | Kanban (padrão) ou lista, com busca e filtros |
+| **Candidaturas** | `/candidaturas` | Kanban, com busca                            |
 | **Currículos** | `/curriculos` | Versões do currículo                         |
 | **Painel**     | `/painel`     | Resumo geral                                 |
 
@@ -37,19 +37,14 @@ O endereço `/` e qualquer endereço que não exista levam para `/candidaturas`.
 | Parâmetro     | Em quais páginas | Valor                                                                 |
 | ------------- | ---------------- | --------------------------------------------------------------------- |
 | `application` | todas            | `id` da candidatura aberta no painel lateral (ex.: `?application=12`) |
-| `view`        | candidaturas     | `lista` (sem o parâmetro é o kanban)                                  |
 | `q`           | candidaturas     | Busca em empresa e cargo                                              |
-| `from`, `to`  | candidaturas     | Período da candidatura, `AAAA-MM-DD`                                  |
-| `resume`      | candidaturas     | `id` do currículo usado                                               |
-| `status`      | candidaturas (lista) | Status separados por vírgula (ex.: `interview,offer`)             |
-| `sort`        | candidaturas (lista) | `applied_at`, `updated_at` ou `company`, com `-` para decrescente (padrão `-applied_at`) |
 
 Sempre visíveis, em qualquer tela:
 
 - Botão **Nova candidatura** (atalho `N`).
 - **Busca** por empresa ou cargo (atalho `/`).
 
-O painel lateral de detalhe da candidatura pode ser aberto de qualquer tela (kanban, lista, currículos, painel).
+O painel lateral de detalhe da candidatura pode ser aberto de qualquer tela (kanban, currículos, painel).
 
 ---
 
@@ -63,11 +58,9 @@ Mostra as candidaturas como cards, uma coluna por status.
 
 | Quando                         | Rota                                         |
 | ------------------------------ | -------------------------------------------- |
-| Ao abrir a tela e ao filtrar   | `GET /board` (com `q`, `from`, `to`, `resume_id`) |
+| Ao abrir a tela e ao buscar    | `GET /board` (com `q`)                       |
 | Ao abrir o app (rótulos e tipo ativo/encerrado das colunas) | `GET /statuses` |
-| Para o filtro de currículo     | `GET /resumes`                               |
 | Ao soltar um card em outra coluna | `PATCH /applications/:id/status`          |
-| Ao criar pelo "+" da coluna    | `POST /applications` (com o `status` da coluna) |
 
 **Como funciona**
 
@@ -75,50 +68,23 @@ Mostra as candidaturas como cards, uma coluna por status.
 - As colunas **ativas** (Inscrito até Proposta) ficam abertas. As **encerradas** (Aprovado, Reprovado, Desisti, Sem retorno) ficam estreitas, mostrando só o nome e a contagem; um clique abre a coluna. Assim o quadro precisa de menos rolagem lateral (em telas a partir de cerca de 1800px de largura, não precisa de nenhuma; ver [design.md](design.md)).
 - O card mostra: empresa, cargo, modelo de trabalho (ícone), nome do currículo e há quanto tempo foi o último evento ("há 3 dias", a partir de `last_event_at`).
 - **Arrastar** um card para outra coluna muda o status na hora (o card já aparece na nova coluna antes da resposta da API). Aparece um aviso por alguns segundos com dois botões: **Desfazer** e **Adicionar nota**. Se a API falhar, o card volta para a coluna original e o erro aparece no aviso.
-- **"+" no topo de cada coluna** abre dois campos no próprio topo da coluna: empresa e cargo. `Enter` cria a candidatura já com o status daquela coluna, e os campos ficam abertos para criar outra. `Esc` fecha.
-- **Clicar no card** abre o painel de detalhe (Tela 3).
-- Busca e filtros (período e currículo) ficam numa barra acima do quadro e são guardados na URL. A busca filtra enquanto se digita, sem botão.
-- Um botão alterna entre **Kanban** e **Lista**, mantendo busca e filtros.
+- **Clicar no card** abre o painel de detalhe (Tela 2).
+- A única forma de criar uma candidatura é o botão **Nova candidatura** (ou o atalho `N`), que abre o modal (Tela 3). As colunas não têm botão de criar.
+- A tela é limpa: só o título, a busca e o botão **Nova candidatura** acima do quadro. Não há outra visualização (lista) nem filtros de período, currículo ou status.
+- A busca filtra enquanto se digita, sem botão, e fica guardada na URL.
 
 **Critérios de aceite**
 
 - [ ] O app abre direto no kanban, com as 9 colunas na ordem da API, inclusive as vazias.
-- [ ] Colunas vazias mostram a contagem 0 e o "+" para criar.
+- [ ] Colunas vazias mostram a contagem 0 e o texto "Arraste um card para cá".
 - [ ] Mudar o status de uma candidatura leva **1 ação** (arrastar e soltar).
 - [ ] O card aparece na nova coluna imediatamente e volta para a original se a API devolver erro.
 - [ ] "Desfazer" devolve o card à coluna anterior.
-- [ ] Criar uma candidatura pelo "+" leva **digitar empresa, digitar cargo e `Enter`**, sem abrir modal.
-- [ ] Busca, período e currículo filtram os cards e mantêm todas as colunas.
-- [ ] Recarregar a página mantém busca e filtros (estão na URL).
+- [ ] A busca filtra os cards e mantém todas as colunas.
+- [ ] Recarregar a página mantém a busca (está na URL).
 - [ ] Soltar o card na mesma coluna não chama a API.
 
-### Tela 2 — Lista
-
-A mesma informação do kanban, em tabela. Serve para buscar, comparar e ordenar.
-
-**Consome**
-
-| Quando                  | Rota                                                                 |
-| ----------------------- | -------------------------------------------------------------------- |
-| Ao abrir e ao filtrar   | `GET /applications` (com `status`, `q`, `from`, `to`, `resume_id`, `sort`) |
-| Opções dos filtros      | `GET /statuses` e `GET /resumes`                                     |
-
-**Como funciona**
-
-- Colunas: empresa, cargo, status, data da candidatura, modelo de trabalho, última atualização.
-- Clicar no título de uma coluna ordena por ela (empresa, data da candidatura ou última atualização); um segundo clique inverte a ordem. Padrão: data da candidatura, da mais recente para a mais antiga.
-- Filtro de status com vários status de uma vez (vira `status=interview,offer`). Atalhos prontos no próprio filtro: **Ativas** e **Encerradas**.
-- Clicar numa linha abre o painel de detalhe (Tela 3).
-- Busca, filtros e ordenação ficam na URL.
-
-**Critérios de aceite**
-
-- [ ] Ordenar por qualquer coluna permitida leva **1 clique**.
-- [ ] Filtrar só as ativas ou só as encerradas leva **1 clique**.
-- [ ] Sem candidaturas, a tela mostra um aviso e o botão "Nova candidatura".
-- [ ] Busca sem resultado mostra "Nada encontrado" e um botão para limpar os filtros.
-
-### Tela 3 — Detalhe da candidatura (painel lateral)
+### Tela 2 — Detalhe da candidatura (painel lateral)
 
 Tudo sobre um processo, com edição no lugar e a linha do tempo.
 
@@ -148,7 +114,7 @@ Tudo sobre um processo, com edição no lugar e a linha do tempo.
 
 **Critérios de aceite**
 
-- [ ] Abrir o detalhe leva **1 clique** no card ou na linha.
+- [ ] Abrir o detalhe leva **1 clique** no card.
 - [ ] Editar qualquer campo leva **clicar, digitar e sair do campo**; não há botão de salvar.
 - [ ] Trocar o status pelo painel leva **2 cliques** (abrir o seletor e escolher).
 - [ ] Adicionar uma nota leva **digitar e `Enter`**.
@@ -156,11 +122,11 @@ Tudo sobre um processo, com edição no lugar e a linha do tempo.
 - [ ] O evento de criação não pode ser excluído (o botão não aparece).
 - [ ] Empresa e cargo vazios não são salvos: o campo mostra o erro e volta ao valor anterior ao apertar `Esc`.
 - [ ] Se a candidatura não existir mais (404), o painel fecha e um aviso informa.
-- [ ] As mudanças feitas no painel aparecem no kanban/lista sem recarregar a página.
+- [ ] As mudanças feitas no painel aparecem no kanban sem recarregar a página.
 
-### Tela 4 — Nova candidatura (modal)
+### Tela 3 — Nova candidatura (modal)
 
-Para quando o usuário quer preencher mais que empresa e cargo de uma vez.
+A única forma de criar uma candidatura.
 
 **Consome**
 
@@ -189,7 +155,7 @@ Para quando o usuário quer preencher mais que empresa e cargo de uma vez.
 
 ## Módulo Currículos
 
-### Tela 5 — Currículos
+### Tela 4 — Currículos
 
 As versões do currículo e onde cada uma foi usada.
 
@@ -212,7 +178,7 @@ As versões do currículo e onde cada uma foi usada.
 - Nome e descrição são editáveis no lugar.
 - **Arrastar um PDF sobre um card** troca o arquivo daquele currículo, com a confirmação de dois cliques (o arquivo antigo é apagado).
 - Clicar no nome do arquivo abre o PDF em nova aba.
-- **"Usado em N candidaturas"** expande a lista dessas candidaturas no próprio card; clicar numa delas abre o painel de detalhe (Tela 3).
+- **"Usado em N candidaturas"** expande a lista dessas candidaturas no próprio card; clicar numa delas abre o painel de detalhe (Tela 2).
 - **Excluir** fica desabilitado quando o currículo está em uso, com a explicação "Em uso por N candidaturas". Se a API devolver 409 mesmo assim, a mensagem dela aparece.
 
 **Critérios de aceite**
@@ -229,7 +195,7 @@ As versões do currículo e onde cada uma foi usada.
 
 ## Módulo Painel
 
-### Tela 6 — Painel
+### Tela 5 — Painel
 
 Visão rápida de como estão os processos.
 
@@ -243,14 +209,14 @@ Visão rápida de como estão os processos.
 **Como funciona**
 
 - Números em destaque: **total**, **ativas**, **encerradas** e **candidaturas nos últimos 30 dias**.
-- **Por status**: uma barra por status (os 9, inclusive os zerados), com a contagem. Clicar numa barra abre a lista (Tela 2) já filtrada por aquele status.
+- **Por status**: uma barra por status (os 9, inclusive os zerados), com a contagem. Clicar numa barra abre o kanban com a coluna daquele status à vista (se for uma coluna encerrada, ela já vem aberta).
 - **Eventos recentes**: os 10 últimos, com empresa, cargo, tipo do evento e quando aconteceu. Clicar num evento abre o painel de detalhe da candidatura.
 
 **Critérios de aceite**
 
 - [ ] Os números batem com o `GET /dashboard`.
 - [ ] Os 9 status aparecem, inclusive os que têm 0.
-- [ ] Ir do painel para a lista filtrada por um status leva **1 clique**.
+- [ ] Ir do painel para a coluna de um status no kanban leva **1 clique**.
 - [ ] Ir de um evento recente para o detalhe da candidatura leva **1 clique**.
 - [ ] Sem candidaturas, o painel mostra zeros e o botão "Nova candidatura".
 
@@ -299,7 +265,7 @@ Os atalhos de uma letra não disparam enquanto o usuário digita num campo.
 ### Estados vazios e carregamento
 
 - Toda lista vazia diz o que fazer e oferece o botão da ação (criar candidatura, enviar PDF).
-- Durante o carregamento, a tela mostra o formato do conteúdo (cards e linhas em cinza), não uma tela em branco.
+- Durante o carregamento, a tela mostra o formato do conteúdo (cards em cinza), não uma tela em branco.
 
 ---
 
@@ -312,7 +278,7 @@ Resumo das tarefas mais comuns e do máximo de interações esperado. Digitar te
 | Ver onde estão os processos            | Abrir o app                             | 0      |
 | Mudar o status                         | Arrastar o card                         | 1      |
 | Mudar o status e anotar o motivo       | Arrastar, "Adicionar nota", digitar, `Enter` | 2  |
-| Criar uma candidatura                  | `N` (ou "+" da coluna), empresa, cargo, `Enter` | 1 |
+| Criar uma candidatura                  | `N` (ou o botão "Nova candidatura"), empresa, cargo, `Enter` | 1 |
 | Ver o detalhe de uma candidatura       | Clicar no card                          | 1      |
 | Anotar algo numa candidatura           | Abrir o detalhe, digitar, `Enter`       | 1      |
 | Editar um campo                        | Abrir o detalhe, clicar no campo, digitar | 2    |

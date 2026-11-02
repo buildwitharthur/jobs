@@ -15,8 +15,8 @@
 
 | Módulo | Responsabilidade | Domínio | API | Interface |
 | --- | --- | --- | --- | --- |
-| `statuses` | Disponibilizar a lista fixa e ordenada de status ativos e encerrados. | `Status`, `StatusType` e `StatusDefinition` em [domain.md](domain.md#status) | `GET /statuses` em [api.md](api.md#status) | Colunas, filtros e rótulos descritos em [design/ui.md](design/ui.md) |
-| `applications` | Criar, consultar, editar, excluir e alterar o status das candidaturas. | `Application` e seus inputs/views em [domain.md](domain.md) | Rotas de candidaturas em [api.md](api.md#candidaturas) | Kanban, lista, detalhe e criação em [design/ui.md](design/ui.md#modulo-candidaturas) |
+| `statuses` | Disponibilizar a lista fixa e ordenada de status ativos e encerrados. | `Status`, `StatusType` e `StatusDefinition` em [domain.md](domain.md#status) | `GET /statuses` em [api.md](api.md#status) | Colunas e rótulos descritos em [design/ui.md](design/ui.md) |
+| `applications` | Criar, consultar, editar, excluir e alterar o status das candidaturas. | `Application` e seus inputs/views em [domain.md](domain.md) | Rotas de candidaturas em [api.md](api.md#candidaturas) | Kanban, detalhe e criação em [design/ui.md](design/ui.md#modulo-candidaturas) |
 | `events` | Manter o histórico de criação, mudanças de status e notas manuais. | `ApplicationEvent` e regras por tipo em [domain.md](domain.md) | Rotas de histórico em [api.md](api.md#historico-eventos) | Linha do tempo no detalhe da candidatura em [design/ui.md](design/ui.md) |
 | `board` | Montar as nove colunas do kanban e seus cards, respeitando filtros e ordenação. | `Board`, `BoardColumn` e `BoardCard` em [domain.md](domain.md) | `GET /board` em [api.md](api.md#kanban) | Tela Kanban em [design/ui.md](design/ui.md) |
 | `resumes` | Gerenciar metadados e arquivos PDF dos currículos e seus vínculos com candidaturas. | `Resume`, inputs e views em [domain.md](domain.md) | Rotas de currículos em [api.md](api.md#curriculos) | Tela Currículos em [design/ui.md](design/ui.md#modulo-curriculos) |

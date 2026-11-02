@@ -361,22 +361,6 @@ components:
     rounded: "{rounded.md}"
     border: "1px solid {colors.border-input}"
     padding: "{spacing.xs} {spacing.sm}"
-  data-table:
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.lg}"
-    border: "1px solid {colors.border}"
-  data-table-header:
-    textColor: "{colors.text-secondary}"
-    typography: "{typography.label}"
-    padding: "{spacing.xs} {spacing.sm}"
-    borderBottom: "1px solid {colors.border}"
-  data-table-row:
-    textColor: "{colors.text-primary}"
-    typography: "{typography.body}"
-    padding: "{spacing.xs} {spacing.sm}"
-    borderBottom: "1px solid {colors.border}"
-  data-table-row-hover:
-    backgroundColor: "{colors.bg}"
   resume-card:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.lg}"
@@ -478,7 +462,7 @@ Todo par de texto e fundo abaixo foi conferido e tem contraste de pelo menos **4
 | --------------------- | --------- | --------- | ------------------------------------------------------------------- |
 | `bg`                  | `#020617` | `#f8fafc` | Fundo da aplicação                                                  |
 | `surface-sunken`      | `#0f172a` | `#f1f5f9` | Colunas do kanban, área de soltar, carregamento, hover              |
-| `surface`             | `#1e293b` | `#ffffff` | Cards, painel lateral, modal, tabela, menu                          |
+| `surface`             | `#1e293b` | `#ffffff` | Cards, painel lateral, modal, menu                                  |
 | `border`              | `#334155` | `#e2e8f0` | Bordas decorativas e divisórias                                     |
 | `border-input`        | `#94a3b8` | `#64748b` | Contorno de campos (o único contorno que precisa de contraste)      |
 | `text-primary`        | `#f1f5f9` | `#0f172a` | Texto principal: empresa, títulos, valores                          |
@@ -542,7 +526,7 @@ Os tons de feedback coincidem com alguns status (verde = Aprovado, vermelho = Re
 
 ### Família
 
-**Inter** em todo o app, com as fontes de interface do sistema como alternativa (`system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`). Números que se comparam (contagens, números do painel, datas da lista) usam algarismos de largura fixa (`tabular-nums`).
+**Inter** em todo o app, com as fontes de interface do sistema como alternativa (`system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`). Números que se comparam (contagens, números do painel) usam algarismos de largura fixa (`tabular-nums`).
 
 ### Hierarquia
 
@@ -551,10 +535,10 @@ Os tons de feedback coincidem com alguns status (verde = Aprovado, vermelho = Re
 | `{typography.display}`    | 24px    | 600  | 32px            | Título de tela ("Currículos", "Painel")                   |
 | `{typography.title}`      | 18px    | 600  | 28px            | Empresa no painel de detalhe, título do modal             |
 | `{typography.heading}`    | 16px    | 600  | 24px            | Nome da coluna, títulos de seção, título de estado vazio  |
-| `{typography.body}`       | 14px    | 400  | 20px            | Texto padrão: cargo, campos, tabela, notas                |
-| `{typography.body-strong}`| 14px    | 500  | 20px            | Empresa no card e na tabela, itens do menu                |
+| `{typography.body}`       | 14px    | 400  | 20px            | Texto padrão: cargo, campos, notas                        |
+| `{typography.body-strong}`| 14px    | 500  | 20px            | Empresa no card, itens do menu                            |
 | `{typography.button}`     | 14px    | 500  | 20px            | Rótulo de botão                                           |
-| `{typography.label}`      | 12px    | 500  | 16px            | Rótulo de campo, selo de status, cabeçalho da tabela      |
+| `{typography.label}`      | 12px    | 500  | 16px            | Rótulo de campo, selo de status                           |
 | `{typography.caption}`    | 12px    | 400  | 16px            | "há 3 dias", datas, contagens, mensagem de erro           |
 | `{typography.number}`     | 30px    | 600  | 36px            | Números em destaque do painel                             |
 
@@ -570,7 +554,7 @@ Os tons de feedback coincidem com alguns status (verde = Aprovado, vermelho = Re
 
 Base de **4px**, com incremento principal de 8px: `{spacing.xxs}` (4px) até `{spacing.xxxl}` (40px).
 
-- Dentro de componentes (card, campo, item de tabela): `xxs` a `sm`.
+- Dentro de componentes (card, campo): `xxs` a `sm`.
 - Entre componentes (cards na coluna, campos no painel): `xs` a `md`.
 - Margens de tela e de painel: `xl`.
 
@@ -578,9 +562,9 @@ Base de **4px**, com incremento principal de 8px: `{spacing.xxs}` (4px) até `{s
 
 ```
 ┌──────────┬──────────────────────────────────────────────────────┐
-│  nav     │  cabeçalho: título · busca · filtros · [Nova candidatura] │
+│  nav     │  cabeçalho: título · busca · [Nova candidatura]       │
 │  220px   ├──────────────────────────────────────────────────────┤
-│          │  conteúdo (kanban, lista, currículos, painel)          │
+│          │  conteúdo (kanban, currículos, painel)                │
 │          │                                          ┌───────────┤
 │          │                                          │  drawer   │
 │          │                                          │  480px    │
@@ -588,16 +572,16 @@ Base de **4px**, com incremento principal de 8px: `{spacing.xxs}` (4px) até `{s
 ```
 
 - **Menu lateral** fixo à esquerda (`{size.nav-width}`), com os três itens do [ui.md](ui.md).
-- **Cabeçalho** de cada tela com título, busca, filtros e o botão primário.
+- **Cabeçalho** de cada tela com título, busca e o botão primário. Não há barra de filtros.
 - **Kanban**: colunas lado a lado, com `{spacing.sm}` entre elas, que dividem o espaço disponível entre `{size.column-min-width}` e `{size.column-max-width}` de largura; encerradas recolhidas em `{size.column-collapsed-width}`. Cada coluna rola sozinha na vertical.
 - **Painel lateral** (`{size.drawer-width}`) desliza da direita por cima do conteúdo; o conteúdo atrás continua visível.
-- Telas sem kanban (lista, currículos, painel) têm largura máxima de 1200px.
+- Telas sem kanban (currículos, painel) têm largura máxima de 1200px.
 
 ## Elevação
 
 | Nível                 | Escuro (padrão)                             | Claro                                        | Uso                                      |
 | --------------------- | ------------------------------------------- | -------------------------------------------- | ---------------------------------------- |
-| `{elevation.flat}`    | nenhuma, só borda `{colors.border}`         | igual                                        | Cards, colunas, tabela, tudo em repouso  |
+| `{elevation.flat}`    | nenhuma, só borda `{colors.border}`         | igual                                        | Cards, colunas, tudo em repouso          |
 | `{elevation.raised}`  | `rgba(0, 0, 0, 0.30) 0px 1px 2px 0px`       | `rgba(15, 23, 42, 0.06) 0px 1px 2px 0px`     | Card com o mouse em cima                 |
 | `{elevation.dragging}`| `rgba(0, 0, 0, 0.50) 0px 8px 24px -4px`     | `rgba(15, 23, 42, 0.12) 0px 8px 24px -4px`   | Card sendo arrastado                     |
 | `{elevation.overlay}` | `rgba(0, 0, 0, 0.50) 0px 16px 48px -8px`    | `rgba(15, 23, 42, 0.16) 0px 16px 48px -8px`  | Painel lateral, modal, menus, avisos     |
@@ -612,7 +596,7 @@ No escuro, sombra quase não aparece; por isso o que está por cima também é *
 | `{rounded.xs}`  | 4px    | Esqueleto de carregamento de texto                    |
 | `{rounded.sm}`  | 6px    | Selo de status, botão fantasma, campo no lugar, tooltip |
 | `{rounded.md}`  | 8px    | Botões, campos, card de candidatura, aviso, item de menu |
-| `{rounded.lg}`  | 12px   | Coluna do kanban, modal, tabela, card de currículo, painel |
+| `{rounded.lg}`  | 12px   | Coluna do kanban, modal, card de currículo, painel |
 | `{rounded.full}`| 9999px | Ponto de status e barra do painel                     |
 
 ## Movimento
@@ -629,10 +613,10 @@ No escuro, sombra quase não aparece; por isso o que está por cima também é *
 **`button-primary`**: a ação principal da tela, no máximo um por tela ("Nova candidatura", "Salvar" do modal, "Enviar PDF").
 - Fundo `{colors.primary}`, texto `{colors.on-primary}`, `{typography.button}`, altura `{size.control-md}`, cantos `{rounded.md}`. Hover em `{colors.primary-hover}`.
 
-**`button-secondary`**: ações comuns ao lado da primária ("Cancelar", alternar Kanban/Lista).
+**`button-secondary`**: ações comuns ao lado da primária ("Cancelar").
 - Fundo `{colors.surface}`, borda `1px {colors.border}`, texto `{colors.text-primary}`. Hover em `{colors.surface-sunken}`.
 
-**`button-ghost`**: ações de ícone e ações discretas (o "+" da coluna, "X" do painel, editar e excluir evento).
+**`button-ghost`**: ações de ícone e ações discretas (recolher coluna, "X" do painel, editar e excluir evento).
 - Sem fundo, texto `{colors.text-secondary}`, altura `{size.control-sm}`, cantos `{rounded.sm}`. Hover em `{colors.surface-sunken}` com texto `{colors.text-primary}`.
 
 **`button-danger`** e **`button-danger-confirm`**: exclusão com confirmação em dois cliques.
@@ -643,7 +627,7 @@ No escuro, sombra quase não aparece; por isso o que está por cima também é *
 
 ### Campos
 
-**`text-input`**: campos do modal de nova candidatura e dos filtros.
+**`text-input`**: campos do modal de nova candidatura e a busca.
 - Fundo `{colors.surface}`, borda `1px {colors.border-input}`, texto `{typography.body}` em `{colors.text-primary}`, exemplo em `{colors.text-muted}`, altura `{size.control-md}`.
 - Foco (`text-input-focused`): borda `{colors.primary}` e anel de 2px em `{colors.focus}`.
 - Erro (`text-input-error`): borda `{colors.danger-solid}` e mensagem embaixo em `{typography.caption}` + `{colors.danger-text}`, vinda do `details` da API.
@@ -681,12 +665,11 @@ Todos os ícones são do **[Lucide](https://lucide.dev)** (licença ISC): traço
 | Uso                          | Ícone Lucide       |
 | ---------------------------- | ------------------ |
 | Menu: Candidaturas / Kanban  | `square-kanban`    |
-| Lista                        | `list`             |
 | Menu: Currículos, currículo  | `file-text`        |
 | Menu: Painel                 | `chart-column`     |
-| Nova candidatura, "+"        | `plus`             |
+| Nova candidatura             | `plus`             |
 | Busca                        | `search`           |
-| Fechar, limpar filtros       | `x`                |
+| Fechar                       | `x`                |
 | Excluir                      | `trash-2`          |
 | Editar                       | `pencil`           |
 | Mudança de status            | `arrow-right`      |
@@ -706,7 +689,7 @@ Todos os ícones são do **[Lucide](https://lucide.dev)** (licença ISC): traço
 
 ### Status
 
-**`status-badge`**: o status em texto, na lista, no detalhe e nos eventos.
+**`status-badge`**: o status em texto, no detalhe e nos eventos.
 - Fundo `{colors.status-<value>-bg}`, texto `{colors.status-<value>-text}`, `{typography.label}`, cantos `{rounded.sm}`.
 
 **`status-dot`**: ponto de 8px em `{colors.status-<value>-accent}`, sempre ao lado do nome do status.
@@ -717,7 +700,7 @@ O seletor de status do painel de detalhe mostra o `status-badge` do status atual
 
 **`kanban-column`**: fundo `{colors.surface-sunken}`, cantos `{rounded.lg}`, largura flexível entre `{size.column-min-width}` e `{size.column-max-width}`. Cards empilhados com `{spacing.xs}` entre eles.
 
-**`kanban-column-header`**: ponto do status, nome em `{typography.heading}`, contagem em `{typography.caption}` + `{colors.text-secondary}` e o botão "+" (`button-ghost`) à direita.
+**`kanban-column-header`**: ponto do status, nome em `{typography.heading}`, contagem em `{typography.caption}` + `{colors.text-secondary}`; nas colunas encerradas, o botão de recolher (`button-ghost`) à direita. Não há botão de criar na coluna.
 
 **`kanban-column-collapsed`**: coluna encerrada recolhida, com `{size.column-collapsed-width}` de largura; mostra o ponto, a contagem e o nome na vertical em `{colors.status-<value>-text}`. Um clique expande.
 
@@ -744,12 +727,6 @@ O seletor de status do painel de detalhe mostra o `status-badge` do status atual
 - Nota: ícone de balão; o texto da nota em `{typography.body}`.
 - Data em `{typography.caption}` + `{colors.text-muted}`. Editar e excluir (`button-ghost`) aparecem só com o mouse em cima.
 
-### Lista
-
-**`data-table`**: fundo `{colors.surface}`, borda `{colors.border}`, cantos `{rounded.lg}`.
-- Cabeçalho (`data-table-header`) em `{typography.label}` + `{colors.text-secondary}`, com seta de ordenação na coluna ativa.
-- Linhas (`data-table-row`) em `{typography.body}`, divididas por `{colors.border}`; hover em `{colors.bg}`. O status aparece como `status-badge`; datas com `tabular-nums`.
-
 ### Currículos
 
 **`resume-card`**: fundo `{colors.surface}`, borda `{colors.border}`, cantos `{rounded.lg}`. Nome (`inline-field` em `{typography.body-strong}`), descrição (`inline-field`), nome do arquivo como link em `{colors.primary-text}`, "usado em N candidaturas" como `button-ghost` que expande a lista.
@@ -760,7 +737,7 @@ O seletor de status do painel de detalhe mostra o `status-badge` do status atual
 
 **`stat-tile`**: número em `{typography.number}` + `{colors.text-primary}` e rótulo em `{typography.body}` + `{colors.text-secondary}`. Quatro lado a lado: total, ativas, encerradas, últimos 30 dias.
 
-**`status-bar`**: uma linha por status com ponto, nome, barra (trilho em `{colors.surface-sunken}`, preenchimento em `{colors.status-<value>-accent}`, 8px de altura, `{rounded.full}`) e contagem. A linha inteira é clicável e leva para a lista filtrada.
+**`status-bar`**: uma linha por status com ponto, nome, barra (trilho em `{colors.surface-sunken}`, preenchimento em `{colors.status-<value>-accent}`, 8px de altura, `{rounded.full}`) e contagem. A linha inteira é clicável e leva para a coluna daquele status no kanban.
 
 ### Navegação
 
@@ -770,7 +747,7 @@ O seletor de status do painel de detalhe mostra o `status-badge` do status atual
 
 ### Estados
 
-**`skeleton`**: blocos em `{colors.surface-sunken}` no formato do conteúdo (cards nas colunas, linhas na tabela) enquanto carrega.
+**`skeleton`**: blocos em `{colors.surface-sunken}` no formato do conteúdo (cards nas colunas) enquanto carrega.
 
 **`empty-state`**: centralizado, título em `{typography.heading}`, texto em `{typography.body}` + `{colors.text-secondary}` e o botão da ação correspondente.
 

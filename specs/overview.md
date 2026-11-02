@@ -71,7 +71,7 @@ Uma candidatura referencia o currículo que foi enviado.
 ## Funcionalidades esperadas (alto nível)
 
 - **Kanban** como visão principal: uma coluna por status, com cada candidatura em um card. Arrastar um card para outra coluna muda o status e registra o evento no histórico.
-- Listar candidaturas com filtro e busca (por status, empresa, data).
+- Buscar candidaturas por empresa ou cargo no kanban. A interface não tem outra visualização (lista) nem filtros.
 - Criar, editar e excluir candidaturas.
 - Atualizar o status de uma candidatura e registrar eventos no histórico.
 - Ver os detalhes de uma candidatura com sua linha do tempo.

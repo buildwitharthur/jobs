@@ -37,7 +37,6 @@ const DAY = 24 * 60 * 60 * 1000;
 /** Ícones do Lucide (lucide.dev, licença ISC), copiados do pacote lucide@0.460.0. */
 const ICONS = {
   board: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/>', // square-kanban
-  list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>', // list
   file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>', // file-text
   chart: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>', // chart-column
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>', // plus
@@ -57,8 +56,6 @@ const ICONS = {
   clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', // clock
   chevronDown: '<path d="m6 9 6 6 6-6"/>', // chevron-down
   chevronRight: '<path d="m9 18 6-6-6-6"/>', // chevron-right
-  sortUp: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>', // arrow-up
-  sortDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>', // arrow-down
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', // info
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', // triangle-alert
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>', // moon
@@ -541,17 +538,10 @@ async function isPdf(file) {
 
 const ui = {
   route: "candidaturas",
-  view: "kanban",
   q: "",
-  from: "",
-  to: "",
-  resume: "",
-  status: [],
-  sort: "-applied_at",
   application: null,
   loading: true,
   expandedColumns: new Set(),
-  quickAdd: null,
   confirm: null,
   highlight: null,
   saved: null,
@@ -571,28 +561,14 @@ function readUrl() {
   const [path, query = ""] = location.hash.replace(/^#\/?/, "").split("?");
   const params = new URLSearchParams(query);
   ui.route = ROUTES.includes(path) ? path : "candidaturas";
-  ui.view = params.get("view") === "lista" ? "lista" : "kanban";
   ui.q = params.get("q") ?? "";
-  ui.from = params.get("from") ?? "";
-  ui.to = params.get("to") ?? "";
-  ui.resume = params.get("resume") ?? "";
-  ui.status = (params.get("status") ?? "").split(",").filter((value) => STATUS[value]);
-  ui.sort = params.get("sort") ?? "-applied_at";
   const applicationId = Number(params.get("application"));
   ui.application = applicationId > 0 ? applicationId : null;
 }
 
 function buildHash() {
   const params = new URLSearchParams();
-  if (ui.route === "candidaturas") {
-    if (ui.view === "lista") params.set("view", "lista");
-    if (ui.q) params.set("q", ui.q);
-    if (ui.from) params.set("from", ui.from);
-    if (ui.to) params.set("to", ui.to);
-    if (ui.resume) params.set("resume", ui.resume);
-    if (ui.view === "lista" && ui.status.length) params.set("status", ui.status.join(","));
-    if (ui.view === "lista" && ui.sort !== "-applied_at") params.set("sort", ui.sort);
-  }
+  if (ui.route === "candidaturas" && ui.q) params.set("q", ui.q);
   if (ui.application) params.set("application", ui.application);
   const query = params.toString();
   return `#/${ui.route}${query ? `?${query}` : ""}`;
@@ -636,26 +612,11 @@ const requestRender = () => {
    Consultas usadas pelas telas
    ========================================================================== */
 
-function filterApplications({ withStatus }) {
+function filterApplications() {
   const q = ui.q.trim().toLowerCase();
-  return db.applications.filter((application) => {
-    if (q && !`${application.company} ${application.role}`.toLowerCase().includes(q)) return false;
-    if (ui.from && application.applied_at < ui.from) return false;
-    if (ui.to && application.applied_at > ui.to) return false;
-    if (ui.resume && application.resume_id !== Number(ui.resume)) return false;
-    if (withStatus && ui.status.length && !ui.status.includes(application.status)) return false;
-    return true;
-  });
-}
-
-function sortApplications(applications) {
-  const desc = ui.sort.startsWith("-");
-  const field = ui.sort.replace(/^-/, "");
-  const sorted = [...applications].sort((a, b) => {
-    const result = field === "company" ? a.company.localeCompare(b.company, "pt-BR") : a[field].localeCompare(b[field]);
-    return result || a.id - b.id;
-  });
-  return desc ? sorted.reverse() : sorted;
+  return db.applications.filter(
+    (application) => !q || `${application.company} ${application.role}`.toLowerCase().includes(q),
+  );
 }
 
 function dashboardData() {
@@ -734,34 +695,19 @@ function renderNav() {
 }
 
 /* ==========================================================================
-   Tela: Candidaturas (kanban e lista)
+   Tela: Candidaturas (kanban)
    ========================================================================== */
 
 function renderCandidaturas() {
   const header = `
     <header class="header">
       <h1 class="t-display header__title">Candidaturas</h1>
-      <div class="segmented" role="group" aria-label="Visualização">
-        <button type="button" class="segmented__item" data-action="set-view" data-view="kanban" aria-pressed="${ui.view === "kanban"}">${icon("board")}Kanban</button>
-        <button type="button" class="segmented__item" data-action="set-view" data-view="lista" aria-pressed="${ui.view === "lista"}">${icon("list")}Lista</button>
-      </div>
       <div class="header__spacer"></div>
       ${searchField()}
       ${newApplicationButton()}
-    </header>
-    <div class="toolbar">
-      <label class="filter-label">De <input class="input input--compact" type="date" data-filter="from" value="${esc(ui.from)}" /></label>
-      <label class="filter-label">Até <input class="input input--compact" type="date" data-filter="to" value="${esc(ui.to)}" /></label>
-      <label class="filter-label">Currículo
-        <select class="select input--compact" data-filter="resume">${resumeOptions(ui.resume, "Todos os currículos")}</select>
-      </label>
-      ${ui.q || ui.from || ui.to || ui.resume || ui.status.length ? `<button type="button" class="button button--ghost" data-action="clear-filters">${icon("x")}Limpar filtros</button>` : ""}
-    </div>`;
+    </header>`;
 
-  if (ui.loading) return `${header}<div class="content content--board">${boardSkeleton()}</div>`;
-  return ui.view === "kanban"
-    ? `${header}<div class="content content--board">${renderBoard()}</div>`
-    : `${header}<div class="content">${renderList()}</div>`;
+  return `${header}<div class="content content--board">${ui.loading ? boardSkeleton() : renderBoard()}</div>`;
 }
 
 function boardSkeleton() {
@@ -775,14 +721,14 @@ function boardSkeleton() {
 }
 
 function renderBoard() {
-  const applications = filterApplications({ withStatus: false });
+  const applications = filterApplications();
   const columns = STATUSES.map((status) => {
     const cards = applications
       .filter((application) => application.status === status.value)
       .map((application) => ({ application, last: lastEventAt(application) }))
       .sort((a, b) => b.last.localeCompare(a.last));
 
-    const collapsed = status.type === "closed" && !ui.expandedColumns.has(status.value) && ui.quickAdd !== status.value;
+    const collapsed = status.type === "closed" && !ui.expandedColumns.has(status.value);
     if (collapsed) {
       return `
         <section class="column column--collapsed" data-status="${status.value}" data-column="${status.value}"
@@ -794,21 +740,9 @@ function renderBoard() {
         </section>`;
     }
 
-    const quickAdd =
-      ui.quickAdd === status.value
-        ? `<form class="quick-add" data-quick-add="${status.value}">
-             <input class="input" name="company" placeholder="Empresa — ex.: Acme Tecnologia" autocomplete="off" aria-label="Empresa" />
-             <input class="input" name="role" placeholder="Cargo — ex.: Dev Backend Sênior" autocomplete="off" aria-label="Cargo" />
-             <p class="t-caption quick-add__hint"><span class="kbd">Enter</span> cria · <span class="kbd">Esc</span> fecha</p>
-             <button type="submit" class="visually-hidden" tabindex="-1">Criar</button>
-           </form>`
-        : "";
-
     const body = cards.length
       ? cards.map(({ application, last }) => renderCard(application, last)).join("")
-      : quickAdd
-        ? ""
-        : `<p class="column__empty">Arraste um card para cá ou use o +</p>`;
+      : `<p class="column__empty">Arraste um card para cá</p>`;
 
     return `
       <section class="column" data-status="${status.value}" data-column="${status.value}" aria-label="${esc(status.label)}">
@@ -817,15 +751,13 @@ function renderBoard() {
           <h2 class="t-heading column__title">${esc(status.label)}</h2>
           <span class="t-caption column__count tabular">${cards.length}</span>
           ${status.type === "closed" ? `<button type="button" class="button button--ghost button--icon" data-action="collapse-column" data-status-value="${status.value}" aria-label="Recolher coluna" title="Recolher coluna">${icon("chevronRight")}</button>` : ""}
-          <button type="button" class="button button--ghost button--icon" data-action="quick-add" data-status-value="${status.value}" aria-label="Nova candidatura em ${esc(status.label)}" title="Nova candidatura nesta coluna">${icon("plus")}</button>
         </header>
-        ${quickAdd}
         <div class="column__cards">${body}</div>
       </section>`;
   }).join("");
 
   const noData = db.applications.length === 0;
-  return `${noData ? `<div class="page">${emptyState("Nenhuma candidatura ainda", "Crie a primeira com o botão abaixo ou com o + de uma coluna.", newApplicationButton())}</div>` : ""}
+  return `${noData ? `<div class="page">${emptyState("Nenhuma candidatura ainda", "Crie a primeira com o botão abaixo.", newApplicationButton())}</div>` : ""}
           <div class="board">${columns}</div>`;
 }
 
@@ -845,66 +777,6 @@ function renderCard(application, last) {
         <span title="Último evento: ${formatDateTime(last)}">${icon("clock")}${relative(last)}</span>
       </span>
     </article>`;
-}
-
-function renderList() {
-  const applications = sortApplications(filterApplications({ withStatus: true }));
-  const activeValues = STATUSES.filter((status) => status.type === "active").map((status) => status.value);
-  const closedValues = STATUSES.filter((status) => status.type === "closed").map((status) => status.value);
-  const same = (values) => ui.status.length === values.length && values.every((value) => ui.status.includes(value));
-
-  const chips = `
-    <div class="toolbar" style="padding:0 0 var(--space-md)">
-      <button type="button" class="chip" data-action="status-preset" data-preset="all" aria-pressed="${ui.status.length === 0}">Todas</button>
-      <button type="button" class="chip" data-action="status-preset" data-preset="active" aria-pressed="${same(activeValues)}">Ativas</button>
-      <button type="button" class="chip" data-action="status-preset" data-preset="closed" aria-pressed="${same(closedValues)}">Encerradas</button>
-      <span class="c-muted">·</span>
-      ${STATUSES.map(
-        (status) =>
-          `<button type="button" class="chip" data-status="${status.value}" data-action="toggle-status" data-status-value="${status.value}" aria-pressed="${ui.status.includes(status.value)}"><span class="dot"></span>${esc(status.label)}</button>`,
-      ).join("")}
-    </div>`;
-
-  const sortHeader = (field, label) => {
-    const active = ui.sort.replace(/^-/, "") === field;
-    const desc = ui.sort.startsWith("-");
-    const ariaSort = active ? (desc ? "descending" : "ascending") : "none";
-    return `<button type="button" class="sort" data-action="sort" data-field="${field}" aria-sort="${ariaSort}">${label}${active ? icon(desc ? "sortDown" : "sortUp") : ""}</button>`;
-  };
-
-  if (db.applications.length === 0) {
-    return `<div class="page">${emptyState("Nenhuma candidatura ainda", "Comece criando a primeira.", newApplicationButton())}</div>`;
-  }
-
-  const rows = applications
-    .map(
-      (application) => `
-      <tr data-open="${application.id}" class="${ui.application === application.id ? "is-open" : ""}">
-        <td class="t-body-strong">${esc(application.company)}</td>
-        <td class="c-secondary">${esc(application.role)}</td>
-        <td>${statusBadge(application.status)}</td>
-        <td class="tabular">${formatDate(application.applied_at)}</td>
-        <td class="c-secondary">${application.work_model ? WORK_MODELS[application.work_model] : "—"}</td>
-        <td class="c-secondary tabular" title="${formatDateTime(application.updated_at)}">${relative(application.updated_at)}</td>
-      </tr>`,
-    )
-    .join("");
-
-  const table = applications.length
-    ? `<div class="table-wrap"><table class="table">
-         <thead><tr>
-           <th>${sortHeader("company", "Empresa")}</th><th>Cargo</th><th>Status</th>
-           <th>${sortHeader("applied_at", "Candidatura")}</th><th>Modelo</th><th>${sortHeader("updated_at", "Atualização")}</th>
-         </tr></thead>
-         <tbody>${rows}</tbody>
-       </table></div>`
-    : emptyState(
-        "Nada encontrado",
-        "Nenhuma candidatura corresponde à busca e aos filtros.",
-        `<button type="button" class="button button--secondary" data-action="clear-filters">Limpar filtros</button>`,
-      );
-
-  return `<div class="page" style="max-width:none">${chips}${table}</div>`;
 }
 
 /* ==========================================================================
@@ -1357,7 +1229,6 @@ function render() {
   const active = document.activeElement;
   const searchFocused = active?.id === "search";
   const caret = searchFocused ? active.selectionStart : null;
-  const quickFocus = active?.closest?.("[data-quick-add]") ? active.name : null;
 
   renderNav();
   main.innerHTML =
@@ -1368,10 +1239,6 @@ function render() {
     const search = document.getElementById("search");
     search.focus();
     search.setSelectionRange(caret, caret);
-  }
-  if (ui.quickAdd) {
-    const form = main.querySelector(`[data-quick-add="${ui.quickAdd}"]`);
-    form?.querySelector(`[name="${quickFocus ?? "company"}"]`)?.focus();
   }
   if (ui.focusResumeName) {
     const input = main.querySelector(`[data-resume-field="name"][data-id="${ui.focusResumeName}"]`);
@@ -1447,30 +1314,6 @@ function moveApplication(id, status) {
       },
     ],
   });
-}
-
-function quickCreate(form) {
-  const company = form.company.value.trim();
-  const role = form.role.value.trim();
-  if (!company) {
-    form.company.focus();
-    return;
-  }
-  if (!role) {
-    form.role.focus();
-    return;
-  }
-  const lastResume = Number(storage.get(LAST_RESUME_KEY));
-  const application = api.createApplication({
-    company,
-    role,
-    status: form.dataset.quickAdd,
-    resume_id: findResume(lastResume) ? lastResume : null,
-  });
-  flashHighlight(application.id);
-  render();
-  const next = document.querySelector(`[data-quick-add="${form.dataset.quickAdd}"] [name="company"]`);
-  next?.focus();
 }
 
 function commitField(input) {
@@ -1569,35 +1412,13 @@ function confirmed(key) {
 const actions = {
   "open-modal": () => openModal(),
   "close-modal": () => closeModal(),
-  "set-view": (element) => navigate({ view: element.dataset.view }),
-  "clear-filters": () => navigate({ q: "", from: "", to: "", resume: "", status: [] }),
   "expand-column": (element) => {
     ui.expandedColumns.add(element.dataset.column);
     render();
   },
   "collapse-column": (element) => {
     ui.expandedColumns.delete(element.dataset.statusValue);
-    if (ui.quickAdd === element.dataset.statusValue) ui.quickAdd = null;
     render();
-  },
-  "quick-add": (element) => {
-    ui.quickAdd = ui.quickAdd === element.dataset.statusValue ? null : element.dataset.statusValue;
-    render();
-  },
-  "status-preset": (element) => {
-    const preset = element.dataset.preset;
-    const status = preset === "all" ? [] : STATUSES.filter((item) => item.type === preset).map((item) => item.value);
-    navigate({ status });
-  },
-  "toggle-status": (element) => {
-    const value = element.dataset.statusValue;
-    navigate({ status: ui.status.includes(value) ? ui.status.filter((item) => item !== value) : [...ui.status, value] });
-  },
-  sort: (element) => {
-    const field = element.dataset.field;
-    const current = ui.sort.replace(/^-/, "");
-    const sort = current === field ? (ui.sort.startsWith("-") ? field : `-${field}`) : field === "company" ? field : `-${field}`;
-    navigate({ sort });
   },
   "close-drawer": () => closeDrawer(),
   "delete-application": (element) => {
@@ -1631,8 +1452,12 @@ const actions = {
     ui.focusComposer = true;
     render();
   },
-  "dashboard-status": (element) =>
-    navigate({ route: "candidaturas", view: "lista", status: [element.dataset.statusValue], q: "", from: "", to: "", resume: "" }, { push: true }),
+  "dashboard-status": (element) => {
+    const value = element.dataset.statusValue;
+    if (STATUS[value].type === "closed") ui.expandedColumns.add(value);
+    navigate({ route: "candidaturas", q: "" }, { push: true });
+    document.querySelector(`[data-column="${value}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  },
   "pick-file": () => document.getElementById("file-input").click(),
   "toggle-usage": (element) => {
     const id = Number(element.dataset.id);
@@ -1685,7 +1510,7 @@ const actions = {
     persist();
     storage.remove(LAST_RESUME_KEY);
     uploadedFiles.clear();
-    navigate({ application: null, quickAdd: null });
+    navigate({ application: null });
     toast({ type: "success", message: "Dados de exemplo restaurados." });
   },
 };
@@ -1716,7 +1541,6 @@ document.addEventListener("click", (event) => {
   const routeLink = target.closest("[data-route]");
   if (routeLink) {
     event.preventDefault();
-    ui.quickAdd = null;
     navigate({ route: routeLink.dataset.route }, { push: true });
     return;
   }
@@ -1741,10 +1565,6 @@ document.addEventListener("input", (event) => {
 
 document.addEventListener("change", (event) => {
   const target = event.target;
-  if (target.dataset.filter) {
-    navigate({ [target.dataset.filter]: target.value });
-    return;
-  }
   if (target.dataset.action === "change-status") {
     try {
       api.changeStatus(ui.application, target.value);
@@ -1798,7 +1618,6 @@ document.addEventListener("submit", (event) => {
   const form = event.target;
   if (form.id === "new-application") submitModal(form);
   else if (form.id === "composer-form") addNote(form);
-  else if (form.dataset.quickAdd) quickCreate(form);
 });
 
 document.addEventListener("keydown", (event) => {
@@ -1819,9 +1638,6 @@ document.addEventListener("keydown", (event) => {
       delete ui.fieldErrors[target.dataset.field];
       delete ui.drafts[target.dataset.field];
       target.blur();
-      render();
-    } else if (ui.quickAdd) {
-      ui.quickAdd = null;
       render();
     } else if (ui.application) {
       closeDrawer();
