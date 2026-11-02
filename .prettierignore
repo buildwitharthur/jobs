@@ -6,3 +6,5 @@ storage
 specs
 AGENTS.md
 **/generated
+**/routeTree.gen.ts
+**/api-schema.d.ts

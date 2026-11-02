@@ -1,0 +1,371 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens do app (fonte: specs/design/design.md; referência visual: specs/design/prototype).
+ *
+ * Os valores de cada tema ficam em variáveis --ds-* (escuro em :root, claro em [data-theme="light"]).
+ * O @theme inline expõe esses tokens ao Tailwind com os mesmos nomes do design.md:
+ *   token `surface-sunken`    -> bg-surface-sunken
+ *   token `text-primary`      -> text-text-primary
+ *   token `status-applied-bg` -> bg-status-applied-bg
+ * As paletas padrão do Tailwind são removidas para nenhuma cor fora do design system ser usada.
+ */
+
+/* ==========================================================================
+   Tema escuro (padrão)
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Superfícies e texto */
+  --ds-bg: #020617;
+  --ds-surface: #1e293b;
+  --ds-surface-sunken: #0f172a;
+  --ds-border: #334155;
+  --ds-border-input: #94a3b8;
+  --ds-text-primary: #f1f5f9;
+  --ds-text-secondary: #cbd5e1;
+  --ds-text-muted: #94a3b8;
+
+  /* Ação */
+  --ds-primary: #4f46e5;
+  --ds-primary-hover: #4338ca;
+  --ds-primary-text: #a5b4fc;
+  --ds-primary-subtle: #1e1b4b;
+  --ds-primary-subtle-text: #c7d2fe;
+  --ds-on-primary: #ffffff;
+  --ds-focus: #818cf8;
+
+  /* Feedback */
+  --ds-success-bg: #052e16;
+  --ds-success-text: #86efac;
+  --ds-danger-bg: #450a0a;
+  --ds-danger-text: #fca5a5;
+  --ds-danger-solid: #dc2626;
+  --ds-on-danger: #ffffff;
+  --ds-warning-bg: #451a03;
+  --ds-warning-text: #fcd34d;
+  --ds-info-bg: #172554;
+  --ds-info-text: #93c5fd;
+
+  /* Status */
+  --ds-status-applied-bg: #172554;
+  --ds-status-applied-text: #93c5fd;
+  --ds-status-applied-accent: #3b82f6;
+  --ds-status-screening-bg: #082f49;
+  --ds-status-screening-text: #7dd3fc;
+  --ds-status-screening-accent: #0ea5e9;
+  --ds-status-interview-bg: #2e1065;
+  --ds-status-interview-text: #c4b5fd;
+  --ds-status-interview-accent: #8b5cf6;
+  --ds-status-technical_test-bg: #451a03;
+  --ds-status-technical_test-text: #fcd34d;
+  --ds-status-technical_test-accent: #f59e0b;
+  --ds-status-offer-bg: #042f2e;
+  --ds-status-offer-text: #5eead4;
+  --ds-status-offer-accent: #14b8a6;
+  --ds-status-accepted-bg: #052e16;
+  --ds-status-accepted-text: #86efac;
+  --ds-status-accepted-accent: #22c55e;
+  --ds-status-rejected-bg: #450a0a;
+  --ds-status-rejected-text: #fca5a5;
+  --ds-status-rejected-accent: #ef4444;
+  --ds-status-withdrawn-bg: #1f2937;
+  --ds-status-withdrawn-text: #d1d5db;
+  --ds-status-withdrawn-accent: #9ca3af;
+  --ds-status-no_response-bg: #292524;
+  --ds-status-no_response-text: #d6d3d1;
+  --ds-status-no_response-accent: #a8a29e;
+
+  /* Elevação */
+  --ds-shadow-raised: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  --ds-shadow-dragging: 0px 8px 24px -4px rgba(0, 0, 0, 0.5);
+  --ds-shadow-overlay: 0px 16px 48px -8px rgba(0, 0, 0, 0.5);
+  --ds-backdrop: rgba(2, 6, 23, 0.7);
+
+  /* Movimento */
+  --ds-motion-fast: 120ms ease-out;
+  --ds-motion-base: 180ms ease-out;
+  --ds-motion-slow: 240ms ease-out;
+}
+
+/* ==========================================================================
+   Tema claro (alternativa): mesmos tokens, outros valores
+   ========================================================================== */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ds-bg: #f8fafc;
+  --ds-surface: #ffffff;
+  --ds-surface-sunken: #f1f5f9;
+  --ds-border: #e2e8f0;
+  --ds-border-input: #64748b;
+  --ds-text-primary: #0f172a;
+  --ds-text-secondary: #475569;
+  --ds-text-muted: #64748b;
+
+  --ds-primary: #4f46e5;
+  --ds-primary-hover: #4338ca;
+  --ds-primary-text: #4f46e5;
+  --ds-primary-subtle: #eef2ff;
+  --ds-primary-subtle-text: #4338ca;
+  --ds-on-primary: #ffffff;
+  --ds-focus: #6366f1;
+
+  --ds-success-bg: #f0fdf4;
+  --ds-success-text: #15803d;
+  --ds-danger-bg: #fef2f2;
+  --ds-danger-text: #b91c1c;
+  --ds-danger-solid: #dc2626;
+  --ds-on-danger: #ffffff;
+  --ds-warning-bg: #fffbeb;
+  --ds-warning-text: #b45309;
+  --ds-info-bg: #eff6ff;
+  --ds-info-text: #1d4ed8;
+
+  --ds-status-applied-bg: #eff6ff;
+  --ds-status-applied-text: #1d4ed8;
+  --ds-status-screening-bg: #f0f9ff;
+  --ds-status-screening-text: #0369a1;
+  --ds-status-interview-bg: #f5f3ff;
+  --ds-status-interview-text: #6d28d9;
+  --ds-status-technical_test-bg: #fffbeb;
+  --ds-status-technical_test-text: #b45309;
+  --ds-status-offer-bg: #f0fdfa;
+  --ds-status-offer-text: #0f766e;
+  --ds-status-accepted-bg: #f0fdf4;
+  --ds-status-accepted-text: #15803d;
+  --ds-status-rejected-bg: #fef2f2;
+  --ds-status-rejected-text: #b91c1c;
+  --ds-status-withdrawn-bg: #f3f4f6;
+  --ds-status-withdrawn-text: #4b5563;
+  --ds-status-no_response-bg: #f5f5f4;
+  --ds-status-no_response-text: #57534e;
+
+  --ds-shadow-raised: 0px 1px 2px 0px rgba(15, 23, 42, 0.06);
+  --ds-shadow-dragging: 0px 8px 24px -4px rgba(15, 23, 42, 0.12);
+  --ds-shadow-overlay: 0px 16px 48px -8px rgba(15, 23, 42, 0.16);
+  --ds-backdrop: rgba(15, 23, 42, 0.4);
+}
+
+/*
+ * Status dinâmico: um elemento com data-status="<value>" expõe a cor do status dele em
+ * bg-status-bg, text-status-text e bg-status-accent / border-status-accent.
+ */
+[data-status="applied"] {
+  --ds-s-bg: var(--ds-status-applied-bg);
+  --ds-s-text: var(--ds-status-applied-text);
+  --ds-s-accent: var(--ds-status-applied-accent);
+}
+[data-status="screening"] {
+  --ds-s-bg: var(--ds-status-screening-bg);
+  --ds-s-text: var(--ds-status-screening-text);
+  --ds-s-accent: var(--ds-status-screening-accent);
+}
+[data-status="interview"] {
+  --ds-s-bg: var(--ds-status-interview-bg);
+  --ds-s-text: var(--ds-status-interview-text);
+  --ds-s-accent: var(--ds-status-interview-accent);
+}
+[data-status="technical_test"] {
+  --ds-s-bg: var(--ds-status-technical_test-bg);
+  --ds-s-text: var(--ds-status-technical_test-text);
+  --ds-s-accent: var(--ds-status-technical_test-accent);
+}
+[data-status="offer"] {
+  --ds-s-bg: var(--ds-status-offer-bg);
+  --ds-s-text: var(--ds-status-offer-text);
+  --ds-s-accent: var(--ds-status-offer-accent);
+}
+[data-status="accepted"] {
+  --ds-s-bg: var(--ds-status-accepted-bg);
+  --ds-s-text: var(--ds-status-accepted-text);
+  --ds-s-accent: var(--ds-status-accepted-accent);
+}
+[data-status="rejected"] {
+  --ds-s-bg: var(--ds-status-rejected-bg);
+  --ds-s-text: var(--ds-status-rejected-text);
+  --ds-s-accent: var(--ds-status-rejected-accent);
+}
+[data-status="withdrawn"] {
+  --ds-s-bg: var(--ds-status-withdrawn-bg);
+  --ds-s-text: var(--ds-status-withdrawn-text);
+  --ds-s-accent: var(--ds-status-withdrawn-accent);
+}
+[data-status="no_response"] {
+  --ds-s-bg: var(--ds-status-no_response-bg);
+  --ds-s-text: var(--ds-status-no_response-text);
+  --ds-s-accent: var(--ds-status-no_response-accent);
+}
+
+/* ==========================================================================
+   Tokens no Tailwind
+   ========================================================================== */
+
+/* Tokens que mudam com o tema: apontam para as variáveis --ds-*. */
+@theme inline {
+  --color-*: initial;
+
+  --color-bg: var(--ds-bg);
+  --color-surface: var(--ds-surface);
+  --color-surface-sunken: var(--ds-surface-sunken);
+  --color-border: var(--ds-border);
+  --color-border-input: var(--ds-border-input);
+  --color-text-primary: var(--ds-text-primary);
+  --color-text-secondary: var(--ds-text-secondary);
+  --color-text-muted: var(--ds-text-muted);
+
+  --color-primary: var(--ds-primary);
+  --color-primary-hover: var(--ds-primary-hover);
+  --color-primary-text: var(--ds-primary-text);
+  --color-primary-subtle: var(--ds-primary-subtle);
+  --color-primary-subtle-text: var(--ds-primary-subtle-text);
+  --color-on-primary: var(--ds-on-primary);
+  --color-focus: var(--ds-focus);
+
+  --color-success-bg: var(--ds-success-bg);
+  --color-success-text: var(--ds-success-text);
+  --color-danger-bg: var(--ds-danger-bg);
+  --color-danger-text: var(--ds-danger-text);
+  --color-danger-solid: var(--ds-danger-solid);
+  --color-on-danger: var(--ds-on-danger);
+  --color-warning-bg: var(--ds-warning-bg);
+  --color-warning-text: var(--ds-warning-text);
+  --color-info-bg: var(--ds-info-bg);
+  --color-info-text: var(--ds-info-text);
+
+  --color-status-applied-bg: var(--ds-status-applied-bg);
+  --color-status-applied-text: var(--ds-status-applied-text);
+  --color-status-applied-accent: var(--ds-status-applied-accent);
+  --color-status-screening-bg: var(--ds-status-screening-bg);
+  --color-status-screening-text: var(--ds-status-screening-text);
+  --color-status-screening-accent: var(--ds-status-screening-accent);
+  --color-status-interview-bg: var(--ds-status-interview-bg);
+  --color-status-interview-text: var(--ds-status-interview-text);
+  --color-status-interview-accent: var(--ds-status-interview-accent);
+  --color-status-technical_test-bg: var(--ds-status-technical_test-bg);
+  --color-status-technical_test-text: var(--ds-status-technical_test-text);
+  --color-status-technical_test-accent: var(--ds-status-technical_test-accent);
+  --color-status-offer-bg: var(--ds-status-offer-bg);
+  --color-status-offer-text: var(--ds-status-offer-text);
+  --color-status-offer-accent: var(--ds-status-offer-accent);
+  --color-status-accepted-bg: var(--ds-status-accepted-bg);
+  --color-status-accepted-text: var(--ds-status-accepted-text);
+  --color-status-accepted-accent: var(--ds-status-accepted-accent);
+  --color-status-rejected-bg: var(--ds-status-rejected-bg);
+  --color-status-rejected-text: var(--ds-status-rejected-text);
+  --color-status-rejected-accent: var(--ds-status-rejected-accent);
+  --color-status-withdrawn-bg: var(--ds-status-withdrawn-bg);
+  --color-status-withdrawn-text: var(--ds-status-withdrawn-text);
+  --color-status-withdrawn-accent: var(--ds-status-withdrawn-accent);
+  --color-status-no_response-bg: var(--ds-status-no_response-bg);
+  --color-status-no_response-text: var(--ds-status-no_response-text);
+  --color-status-no_response-accent: var(--ds-status-no_response-accent);
+
+  /* Cor do status do ancestral com data-status. */
+  --color-status-bg: var(--ds-s-bg);
+  --color-status-text: var(--ds-s-text);
+  --color-status-accent: var(--ds-s-accent);
+
+  --shadow-*: initial;
+  --shadow-raised: var(--ds-shadow-raised);
+  --shadow-dragging: var(--ds-shadow-dragging);
+  --shadow-overlay: var(--ds-shadow-overlay);
+}
+
+/* Tokens iguais nos dois temas. */
+@theme {
+  --font-*: initial;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --font-weight-*: initial;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Escala tipográfica: text-display, text-title, text-heading, text-body, text-caption, text-label, text-number. */
+  --text-*: initial;
+  --text-display: 24px;
+  --text-display--line-height: 32px;
+  --text-display--font-weight: 600;
+  --text-title: 18px;
+  --text-title--line-height: 28px;
+  --text-title--font-weight: 600;
+  --text-heading: 16px;
+  --text-heading--line-height: 24px;
+  --text-heading--font-weight: 600;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 500;
+  --text-number: 30px;
+  --text-number--line-height: 36px;
+  --text-number--font-weight: 600;
+
+  --radius-*: initial;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Espaçamento: a base de 4px do Tailwind (p-1 = 4px) mais os nomes do design.md (p-xs = 8px). */
+  --spacing: 4px;
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-xxxl: 40px;
+
+  /* Tamanhos de layout e controles: h-control-md, w-nav, w-drawer, max-w-modal... */
+  --spacing-control-sm: 28px;
+  --spacing-control-md: 32px;
+  --spacing-nav: 220px;
+  --spacing-drawer: 480px;
+  --spacing-modal: 560px;
+  --spacing-column-min: 240px;
+  --spacing-column-max: 320px;
+  --spacing-column-collapsed: 56px;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}

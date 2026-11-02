@@ -26,9 +26,23 @@ Três itens fixos no menu:
 
 | Item           | Rota da tela  | Conteúdo                                     |
 | -------------- | ------------- | -------------------------------------------- |
-| **Candidaturas** | `/`           | Kanban (padrão) ou lista, com busca e filtros |
-| **Currículos** | `/resumes`    | Versões do currículo                         |
-| **Painel**     | `/dashboard`  | Resumo geral                                 |
+| **Candidaturas** | `/candidaturas` | Kanban (padrão) ou lista, com busca e filtros |
+| **Currículos** | `/curriculos` | Versões do currículo                         |
+| **Painel**     | `/painel`     | Resumo geral                                 |
+
+O endereço `/` e qualquer endereço que não exista levam para `/candidaturas`. Essas são as únicas páginas do app: o painel de detalhe e o modal de nova candidatura não têm página própria.
+
+**Parâmetros de URL.** O estado da tela fica na URL, para recarregar e voltar do navegador funcionarem:
+
+| Parâmetro     | Em quais páginas | Valor                                                                 |
+| ------------- | ---------------- | --------------------------------------------------------------------- |
+| `application` | todas            | `id` da candidatura aberta no painel lateral (ex.: `?application=12`) |
+| `view`        | candidaturas     | `lista` (sem o parâmetro é o kanban)                                  |
+| `q`           | candidaturas     | Busca em empresa e cargo                                              |
+| `from`, `to`  | candidaturas     | Período da candidatura, `AAAA-MM-DD`                                  |
+| `resume`      | candidaturas     | `id` do currículo usado                                               |
+| `status`      | candidaturas (lista) | Status separados por vírgula (ex.: `interview,offer`)             |
+| `sort`        | candidaturas (lista) | `applied_at`, `updated_at` ou `company`, com `-` para decrescente (padrão `-applied_at`) |
 
 Sempre visíveis, em qualquer tela:
 

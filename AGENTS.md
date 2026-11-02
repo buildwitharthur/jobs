@@ -15,6 +15,7 @@ Antes de escrever código, criar arquivos, sugerir mudanças ou responder dúvid
 | [specs/overview.md](specs/overview.md) | Contexto do app, objetivos, conceitos, funcionalidades, escopo e premissas |
 | [specs/domain.md](specs/domain.md) | Models, enums, interfaces de entrada e saída e regras de negócio |
 | [apps/api/AGENTS.md](apps/api/AGENTS.md) | Arquitetura, padrões e tecnologias da API |
+| [apps/web/AGENTS.md](apps/web/AGENTS.md) | Tecnologias, estrutura, rotas e design tokens da interface (web) |
 | [specs/api.md](specs/api.md) | Checklist das rotas: método, caminho, payload, resposta e testes |
 | [specs/design/ui.md](specs/design/ui.md) | Guia de UI/UX: telas, o que cada uma consome, critérios de aceite e metas de cliques |
 | [specs/design/design.md](specs/design/design.md) | Design system: cores (temas escuro e claro), fontes, ícones, layout, elevação, formas, movimento e componentes |

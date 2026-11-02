@@ -13,13 +13,14 @@ A documentação completa está em [specs/](specs/):
 
 ## Monorepo
 
-pnpm (workspaces) + Turborepo. Hoje só existe um app.
+pnpm (workspaces) + Turborepo.
 
-| Pasta                | Conteúdo                                           |
-| -------------------- | -------------------------------------------------- |
-| [apps/api](apps/api) | API em Express + TypeScript (Zod, Prisma, Swagger) |
+| Pasta                | Conteúdo                                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| [apps/api](apps/api) | API em Express + TypeScript (Zod, Prisma, Swagger)                          |
+| [apps/web](apps/web) | Interface do painel em React + TypeScript (Vite, TanStack Router, Tailwind) |
 
-Na raiz ficam ESLint (com typescript-eslint), Prettier (com prettier-plugin-tailwindcss) e EditorConfig, compartilhados pelos apps. A arquitetura da API está em [apps/api/AGENTS.md](apps/api/AGENTS.md).
+Na raiz ficam ESLint (com typescript-eslint), Prettier (com prettier-plugin-tailwindcss) e EditorConfig, compartilhados pelos apps. A arquitetura da API está em [apps/api/AGENTS.md](apps/api/AGENTS.md) e a da interface em [apps/web/AGENTS.md](apps/web/AGENTS.md).
 
 ## Como rodar
 
@@ -27,7 +28,7 @@ Na raiz ficam ESLint (com typescript-eslint), Prettier (com prettier-plugin-tail
 2. Suba o PostgreSQL (versão 18, banco `jobs`, volume `postgres_data`): `docker compose up -d`
 3. Copie `apps/api/.env.example` para `apps/api/.env` (o Compose expõe o Postgres na porta `5433`)
 4. Dentro de `apps/api`, aplique as migrations e gere o cliente do Prisma: `pnpm exec prisma migrate deploy --config prisma7.config.ts` e `pnpm exec prisma generate --config prisma7.config.ts`
-5. Inicie a API: `pnpm dev` (porta `3000`, ou a definida em `PORT`)
+5. Inicie os apps: `pnpm dev` (API na porta `3000`, ou a definida em `PORT`; interface em `http://localhost:5173`)
 
 Com a API no ar, a documentação Swagger fica em `GET /docs` e o JSON em `GET /openapi.json`.
 
