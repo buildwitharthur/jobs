@@ -15,6 +15,7 @@ Interface do painel de candidaturas. Vale junto com o [AGENTS.md](../../AGENTS.m
 - Sonner para os avisos (toasts)
 - React Hook Form com Zod (`@hookform/resolvers`) para os formulários
 - Radix UI (pacote único `radix-ui`) para os componentes primitivos, e `lucide-react` para os ícones
+- `@dnd-kit/core` para arrastar os cards do kanban
 - Axios para as chamadas à API, com os tipos gerados pelo `openapi-typescript` (só os tipos e os `paths`; o `openapi-fetch` não é usado)
 - Fonte Inter (Google Fonts, carregada no `index.html`)
 
@@ -149,15 +150,7 @@ O `queryClient` também está no **contexto do router**, para os `loader` das ro
 - `routes/__root.tsx` usa `createRootRouteWithContext<RouterContext>()`, com `RouterContext = { queryClient: QueryClient }`. Por isso `context.queryClient` tem tipo em todo `loader`.
 - `main.tsx` cria o router com `context: { queryClient: undefined! }` (só um espaço reservado) e o componente `App`, que fica dentro do `QueryProvider`, injeta o cliente real: `<RouterProvider router={router} context={{ queryClient }} />`. É o padrão da documentação do TanStack Router para valores que vêm de hooks.
 
-```tsx
-// src/routes/candidaturas.tsx (exemplo de uso no loader)
-export const Route = createFileRoute("/candidaturas")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(boardQueryOptions),
-  component: ApplicationsScreen,
-});
-```
-
-Os `queryOptions` de cada módulo ficam em `modules/<module>/http/`, para o `loader` e a tela usarem exatamente a mesma chave de cache.
+Nenhuma rota usa `loader` por enquanto: a tela de candidaturas busca o kanban com `useSuspenseQuery` (ver "Kanban"). Se um `loader` for usado, ele chama `context.queryClient.query(...)` (o `ensureQueryData` está obsoleto no TanStack Query) com a mesma `queryKey` do hook da tela.
 
 ### Avisos (`toast.provider.tsx`)
 
@@ -253,27 +246,27 @@ Rotas da API que o `ui.md` não usa ficaram de fora: `GET /applications` (a inte
 Cada consulta (GET) tem **um hook**, em `modules/<module>/hooks/use-<nome>.ts`, que embrulha a chamada de `http/` com o `useQuery`. O arquivo exporta o hook e a **`queryKey`** dele, juntos:
 
 ```ts
-// modules/applications/hooks/use-board.ts
-export const boardQueryKey = (query?: GetBoardQuery) => ["board", query] as const;
+// modules/resumes/hooks/use-resumes.ts
+export const resumesQueryKey = () => ["resumes", "list"] as const;
 
-export const useBoard = (query?: GetBoardQuery) =>
+export const useResumes = () =>
   useQuery({
-    queryKey: boardQueryKey(query),
-    queryFn: () => getBoard(query),
+    queryKey: resumesQueryKey(),
+    queryFn: listResumes,
   });
 ```
 
 Regras:
 
-- O hook é o mais simples possível: `queryKey` e `queryFn`, sem opções extras, e devolve o resultado do `useQuery` como está. Só há duas exceções: `useStatuses` tem `staleTime: Infinity` (a lista de status é fixa no código da API) e `useApplication` e `useResumeApplications` só buscam quando recebem um `id` (`enabled`).
+- O hook é o mais simples possível: `queryKey` e `queryFn`, sem opções extras, e devolve o resultado do `useQuery` como está. As exceções: `useStatuses` tem `staleTime: Infinity` (a lista de status é fixa no código da API); `useBoard` usa `useSuspenseQuery` com `staleTime: Infinity` (ver "Kanban"); e `useApplication` e `useResumeApplications` só buscam quando recebem um `id` (`enabled`).
 - A `queryKey` é uma função (`<nome>QueryKey(...)`) exportada para quem precisar invalidar ou ler o cache. Os parâmetros da consulta fazem parte da chave.
-- As chaves começam pelo recurso, do mais geral ao mais específico: `["board", query]`, `["applications", "detail", id]`, `["resumes", "list"]`, `["resumes", "applications", id]`. Assim invalidar `["applications"]` atinge todos os detalhes.
+- As chaves começam pelo recurso, do mais geral ao mais específico: `["board"]`, `["applications", "detail", id]`, `["resumes", "list"]`, `["resumes", "applications", id]`. Assim invalidar `["applications"]` atinge todos os detalhes.
 - Hook usado por mais de um módulo fica uma vez só, no módulo do recurso (como as chamadas): `useStatuses` em `applications` (o painel também o usa) e `useResumes` em `resumes`.
-- **Só consultas por enquanto**: as mutações (`useMutation`) ainda não foram escritas.
+- Mutações sem formulário também têm um hook em `hooks/` (ex.: `useChangeApplicationStatus`).
 
 | Hook                       | Chamada                | `queryKey`                              | Módulo         |
 | -------------------------- | ---------------------- | --------------------------------------- | -------------- |
-| `useBoard(query?)`         | `getBoard`             | `["board", query]`                      | `applications` |
+| `useBoard()`               | `getBoard`             | `["board"]`                             | `applications` |
 | `useApplication(id)`       | `getApplication`       | `["applications", "detail", id]`        | `applications` |
 | `useStatuses()`            | `getStatuses`          | `["statuses"]`                          | `applications` |
 | `useResumes()`             | `listResumes`          | `["resumes", "list"]`                   | `resumes`      |
@@ -334,7 +327,25 @@ Regras:
 | `useCreateResumeForm()`             | Novo currículo (nome, descrição e PDF)             | `createResume`    | `resumes`      |
 | `useUpdateResumeForm(resume)`       | Edição no lugar do nome e da descrição (`saveField`) | `updateResume`    | `resumes`      |
 
-Ainda **sem** hook de mutação ou formulário: mudar o status (arrastar o card e o seletor do painel), excluir (candidatura, evento, currículo) e trocar o PDF de um currículo. Não têm campos de formulário e entram quando forem pedidos.
+Mudar o status tem o hook `useChangeApplicationStatus()` (sem formulário; ver "Kanban"). Ainda **sem** hook de mutação ou formulário: excluir (candidatura, evento, currículo) e trocar o PDF de um currículo. Não têm campos de formulário e entram quando forem pedidos.
+
+## Kanban
+
+A tela de candidaturas (`ApplicationsScreen`) mostra o cabeçalho e o kanban. O kanban é dividido em três componentes, em `modules/applications/components/`:
+
+| Arquivo            | Componente                       | Função                                                                     |
+| ------------------ | -------------------------------- | -------------------------------------------------------------------------- |
+| `board.tsx`        | `Board`, `BoardSkeleton`         | Lê o kanban (`useBoard`), cuida do arrasto (`DndContext`, `DragOverlay`) e de quais colunas encerradas estão abertas; `BoardSkeleton` é o formato do kanban enquanto carrega |
+| `board-column.tsx` | `BoardColumn`                    | Uma coluna (`useDroppable`, id = `status`): aberta ou recolhida (encerradas) |
+| `board-card.tsx`   | `BoardCard`, `BoardCardOverlay`  | O card (`useDraggable`, id = `id` da candidatura) e a cópia que acompanha o ponteiro |
+
+Regras:
+
+- **O kanban é buscado uma vez só.** `useBoard` usa `useSuspenseQuery` com `staleTime: Infinity`, e a tela envolve o `Board` num `<Suspense fallback={<BoardSkeleton />}>`.
+- **Mexer no kanban altera o cache, não busca de novo.** Ao soltar um card em outra coluna, `useChangeApplicationStatus` chama `PATCH /applications/:id/status` e, no `onMutate`, move o card no cache com `setQueryData` (`moveCard`, em `utils/board.ts`), antes da resposta. Se a API falhar, o `onError` devolve o cache anterior e mostra o erro. Nada invalida o `["board"]`.
+- Soltar na mesma coluna não chama a API. O aviso de mudança tem **Desfazer**, que muda o status de volta pelo mesmo hook.
+- O arrasto começa depois de 4px (`PointerSensor`), para um clique no card continuar sendo clique; o `KeyboardSensor` permite arrastar pelo teclado.
+- Quais colunas são encerradas vem do `useStatuses` (`type: "closed"`).
 
 ## Componentes base (`common/components/ui/`)
 

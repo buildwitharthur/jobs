@@ -29,13 +29,8 @@ import { cn } from "../../../common/utils/cn";
 import { useResumes } from "../../resumes/hooks/use-resumes";
 import { useCreateApplicationForm } from "../hooks/use-create-application-form";
 import { useStatuses } from "../hooks/use-statuses";
+import { WORK_MODELS } from "../utils/work-models";
 import { Kbd } from "./kbd";
-
-const WORK_MODELS = [
-  { value: "remote", label: "Remoto" },
-  { value: "hybrid", label: "Híbrido" },
-  { value: "onsite", label: "Presencial" },
-] as const;
 
 type CreateApplicationDialogProps = {
   /** O que abre o modal (ex.: o botão "Nova candidatura"). */
