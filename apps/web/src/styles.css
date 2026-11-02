@@ -83,6 +83,7 @@
   --ds-shadow-dragging: 0px 8px 24px -4px rgba(0, 0, 0, 0.5);
   --ds-shadow-overlay: 0px 16px 48px -8px rgba(0, 0, 0, 0.5);
   --ds-backdrop: rgba(2, 6, 23, 0.7);
+  --ds-drop-overlay: rgba(30, 27, 75, 0.85);
 
   /* Movimento */
   --ds-motion-fast: 120ms ease-out;
@@ -148,6 +149,7 @@
   --ds-shadow-dragging: 0px 8px 24px -4px rgba(15, 23, 42, 0.12);
   --ds-shadow-overlay: 0px 16px 48px -8px rgba(15, 23, 42, 0.16);
   --ds-backdrop: rgba(15, 23, 42, 0.4);
+  --ds-drop-overlay: rgba(238, 242, 255, 0.85);
 }
 
 /*
@@ -271,6 +273,9 @@
 
   /* Fundo atrás do modal (design.md, elevation.backdrop). */
   --color-backdrop: var(--ds-backdrop);
+
+  /* Fundo da tela inteira enquanto um PDF é arrastado sobre ela (protótipo: drop-overlay). */
+  --color-drop-overlay: var(--ds-drop-overlay);
 
   --shadow-*: initial;
   --shadow-raised: var(--ds-shadow-raised);

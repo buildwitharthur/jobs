@@ -2,6 +2,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { VisuallyHidden } from "radix-ui";
 import { Controller } from "react-hook-form";
+import { DeleteAlert } from "../../../common/components/ui/alert-dialog";
 import { StatusDot } from "../../../common/components/ui/badge";
 import { Button } from "../../../common/components/ui/button";
 import { Input } from "../../../common/components/ui/input";
@@ -26,11 +27,13 @@ import type { UpdateApplicationField } from "../schemas/update-application.schem
 import type { BoardCard, Status } from "../utils/board";
 import { WORK_MODELS } from "../utils/work-models";
 import { ApplicationHistory } from "./application-history";
-import { ConfirmButton } from "./confirm-button";
 
 type ApplicationSheetProps = {
-  /** O card do kanban cuja candidatura o painel mostra. */
-  card: BoardCard;
+  /**
+   * A candidatura que o painel mostra: o card do kanban ou um item da lista "usado em" de um
+   * currículo. O painel só precisa do `id` (busca o resto) e de empresa e cargo para o título.
+   */
+  card: Pick<BoardCard, "id" | "company" | "role">;
   /** O que abre o painel (ex.: o próprio card). */
   children: ReactNode;
 };
@@ -301,10 +304,21 @@ function ApplicationForm({ application }: { application: GetApplicationResponse 
       </div>
 
       <div className="border-border px-xl py-sm flex justify-end border-t">
-        <ConfirmButton onConfirm={() => deleteApplication(application.id)}>
-          <Trash2 aria-hidden />
-          Excluir candidatura
-        </ConfirmButton>
+        <DeleteAlert
+          title="Excluir candidatura?"
+          description={
+            <>
+              A candidatura em <strong>{application.company}</strong> e todo o histórico dela serão
+              apagados. O currículo vinculado não é excluído. Não dá para desfazer.
+            </>
+          }
+          onConfirm={() => deleteApplication(application.id)}
+        >
+          <Button variant="danger">
+            <Trash2 aria-hidden />
+            Excluir candidatura
+          </Button>
+        </DeleteAlert>
       </div>
     </>
   );

@@ -1,8 +1,10 @@
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "../../../common/components/ui/button";
 import { CreateApplicationDialog } from "../../applications/components/create-application-dialog";
 import { Kbd } from "../../applications/components/kbd";
+import { PdfDropOverlay } from "../components/pdf-drop-overlay";
 import { ResumeList } from "../components/resume-list";
+import { UploadResumeButton } from "../components/upload-resume-button";
 
 export function ResumesScreen() {
   return (
@@ -17,16 +19,14 @@ export function ResumesScreen() {
             <Kbd>N</Kbd>
           </Button>
         </CreateApplicationDialog>
-        <Button>
-          <Upload aria-hidden />
-          Enviar PDF
-        </Button>
+        <UploadResumeButton />
       </header>
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="px-xl pb-xxl max-w-[1200px]">
+        <div className="px-xl pb-xxl max-w-300">
           <ResumeList />
         </div>
       </div>
+      <PdfDropOverlay />
     </>
   );
 }

@@ -50,7 +50,7 @@ export const useUpdateApplicationForm = (application: GetApplicationResponse | u
   const mutation = useMutation({
     mutationFn: updateApplication,
     onError: handleMutationError,
-    onSuccess: (updated) => {
+    onSuccess: (updated, { body }) => {
       // O card do kanban mostra alguns desses dados: atualiza no cache, sem buscar o kanban.
       const resumeName =
         queryClient
@@ -69,6 +69,9 @@ export const useUpdateApplicationForm = (application: GetApplicationResponse | u
           : board,
       );
       void queryClient.invalidateQueries({ queryKey: applicationQueryKey(updated.id) });
+
+      // Trocar o currículo muda a contagem "usado em N candidaturas" (e a lista) dos currículos.
+      if ("resume_id" in body) void queryClient.invalidateQueries({ queryKey: ["resumes"] });
     },
   });
 

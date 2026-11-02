@@ -1,5 +1,6 @@
 import { useState, type ComponentProps, type ReactNode } from "react";
 import { ArrowRight, CirclePlus, Clock, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { DeleteAlert } from "../../../common/components/ui/alert-dialog";
 import { Button } from "../../../common/components/ui/button";
 import { StatusBadge } from "../../../common/components/ui/badge";
 import { Input } from "../../../common/components/ui/input";
@@ -11,7 +12,6 @@ import { useDeleteEvent } from "../hooks/use-delete-event";
 import { useStatuses } from "../hooks/use-statuses";
 import { useUpdateEventForm } from "../hooks/use-update-event-form";
 import type { GetApplicationResponse } from "../http/get-application.http";
-import { ConfirmButton } from "./confirm-button";
 import { Kbd } from "./kbd";
 
 type ApplicationEvent = GetApplicationResponse["events"][number];
@@ -175,15 +175,15 @@ function EventItem({ applicationId, event, last, badge }: EventItemProps) {
               <Pencil aria-hidden />
             </Button>
             {event.type !== "created" && (
-              <ConfirmButton
-                size="icon"
-                confirmLabel="Excluir?"
+              <DeleteAlert
+                title="Excluir evento?"
+                description="O evento sai do histórico. O status atual da candidatura não muda."
                 onConfirm={() => deleteEvent({ applicationId, eventId: event.id })}
-                aria-label="Excluir evento"
-                title="Excluir"
               >
-                <Trash2 aria-hidden />
-              </ConfirmButton>
+                <Button variant="danger" size="icon" aria-label="Excluir evento" title="Excluir">
+                  <Trash2 aria-hidden />
+                </Button>
+              </DeleteAlert>
             )}
           </div>
         </>

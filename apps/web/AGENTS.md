@@ -340,10 +340,11 @@ Mutações sem formulário (um hook cada, em `hooks/`):
 | `useChangeApplicationStatus()`  | Mudar o status (kanban e painel)       | Move o card no kanban e o status no detalhe na hora; desfaz se falhar     | `applications` |
 | `useDeleteApplication()`        | Excluir a candidatura                  | Tira o card do kanban (o painel fecha junto), apaga o detalhe e busca de novo os currículos (contagem "usado em") | `applications` |
 | `useDeleteEvent()`              | Excluir um evento                      | `refreshApplication`                                                     | `applications` |
-| `useDeleteResume()`             | Excluir um currículo                   | Tira da lista de currículos                                              | `resumes`      |
-| `useReplaceResumeFile()`        | Trocar o PDF de um currículo           | Troca o currículo na lista                                               | `resumes`      |
+| `useUploadResume()`             | Enviar um PDF e cadastrar o currículo (nome = nome do arquivo) | Coloca o currículo no topo da lista e o card dele foca o nome | `resumes`      |
+| `useDeleteResume()`             | Excluir um currículo                   | Tira da lista de currículos e avisa "Currículo X excluído."              | `resumes`      |
+| `useReplaceResumeFile()`        | Trocar o PDF de um currículo           | Troca o currículo na lista e avisa "Arquivo do currículo trocado."       | `resumes`      |
 
-A confirmação em dois cliques das exclusões é o `ConfirmButton` (`modules/applications/components/confirm-button.tsx`): o primeiro clique arma ("Confirmar exclusão?"), o segundo executa; desarma em 4 segundos ou ao perder o foco.
+A confirmação das exclusões é o `DeleteAlert` (`common/components/ui/alert-dialog.tsx`): o botão de excluir vai como filho (`asChild`) e abre um alerta com `title`, `description`, "Cancelar" e "Excluir"; `onConfirm` roda ao confirmar. O foco começa em "Cancelar". É usado em excluir candidatura (painel), evento (histórico) e currículo (card).
 
 ## Kanban
 
@@ -360,7 +361,7 @@ O painel de detalhe fica em `application-sheet.tsx` (`ApplicationSheet`, com o c
 Regras:
 
 - **O kanban é buscado uma vez só.** `useBoard` usa `useSuspenseQuery` com `staleTime: Infinity`, e a tela envolve o `Board` num `<Suspense fallback={<BoardSkeleton />}>`.
-- **Mexer no kanban altera o cache, não busca de novo.** Ao soltar um card em outra coluna, `useChangeApplicationStatus` chama `PATCH /applications/:id/status` e, no `onMutate`, move o card no cache com `setQueryData` (`moveCard`, em `utils/board.ts`), antes da resposta. Se a API falhar, o `onError` devolve o cache anterior e mostra o erro. Nada invalida o `["board"]`.
+- **Mexer no kanban altera o cache, não busca de novo.** Ao soltar um card em outra coluna, `useChangeApplicationStatus` chama `PATCH /applications/:id/status` e, no `onMutate`, move o card no cache com `setQueryData` (`moveCard`, em `utils/board.ts`), antes da resposta. Se a API falhar, o `onError` devolve o cache anterior e mostra o erro. Nada invalida o `["board"]`, com uma exceção: renomear um currículo (ver "Currículos").
 - Soltar na mesma coluna não chama a API. O aviso de mudança tem **Desfazer**, que muda o status de volta pelo mesmo hook.
 - O arrasto começa depois de 4px (`PointerSensor`), para um clique no card continuar sendo clique; o `KeyboardSensor` permite arrastar pelo teclado.
 - Quais colunas são encerradas vem do `useStatuses` (`type: "closed"`).
@@ -368,16 +369,26 @@ Regras:
 
 ## Currículos
 
-A tela de currículos (`ResumesScreen`) mostra o cabeçalho ("Nova candidatura", que abre o mesmo modal do kanban, e "Enviar PDF", que por enquanto é só o botão, sem ação) e a lista em grade, na ordem da API (`updated_at` decrescente). Sem currículos, mostra a área "Arraste um PDF aqui". Não há busca nesta tela.
+A tela de currículos (`ResumesScreen`) só monta o cabeçalho ("Nova candidatura", que abre o mesmo modal do kanban, e "Enviar PDF", o `UploadResumeButton`), o `ResumeList` e o `PdfDropOverlay`, sem ler dados. A lista é em grade, na ordem da API (`updated_at` decrescente). Sem currículos, mostra a área "Arraste um PDF aqui". Não há busca nesta tela.
 
-A tela só monta o cabeçalho e o `ResumeList`, sem ler dados.
+| Arquivo                   | Componente              | Função                                                                                         |
+| ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `resume-list.tsx`         | `ResumeList`            | Lê os currículos (`useResumes`, já no cache pelo loader), mostra o estado vazio e repassa cada currículo ao card |
+| `resume-card.tsx`         | `ResumeCard`            | Nome e descrição editáveis no lugar, link do PDF, "Atualizado em", "Usado em N candidaturas" (expande a lista), Excluir e a troca do PDF por arrasto |
+| `resume-applications.tsx` | `ResumeApplications`    | A lista "usado em": só é montada (e buscada) quando expande; cada item abre o `ApplicationSheet` |
+| `upload-resume-button.tsx`| `UploadResumeButton`    | "Enviar PDF": abre o seletor de arquivo e cadastra o currículo                                  |
+| `pdf-drop-overlay.tsx`    | `PdfDropOverlay`        | Aviso de tela inteira enquanto um PDF é arrastado; soltar cadastra um currículo                 |
 
-| Arquivo           | Componente   | Função                                                                                         |
-| ----------------- | ------------ | ---------------------------------------------------------------------------------------------- |
-| `resume-list.tsx` | `ResumeList` | Lê os currículos (`useResumes`, já no cache pelo loader), mostra o estado vazio e repassa cada currículo ao card |
-| `resume-card.tsx` | `ResumeCard` | Nome, descrição, link do PDF (nova aba, `getResumeFileUrl`), "Atualizado em" e "Usado em N candidaturas" |
+Regras:
 
-Ainda faltam: edição no lugar do nome e da descrição, expandir "usado em", excluir, arrastar PDF (criar e trocar) e a ação do "Enviar PDF".
+- **Cadastrar por PDF** (botão ou arrasto): `useUploadResume` chama `POST /resumes` direto, sem formulário. O nome é o do arquivo sem `.pdf`. O currículo novo entra no topo da lista no cache, sem buscar a lista de novo; um aviso diz "Ajuste o nome se quiser" e o card dele já abre com o nome focado (`markNewResume`/`consumeNewResume`, em `utils/new-resume.ts`). Arquivo que não é PDF cai no `onError` com a mensagem da API.
+- **Arrastar PDF**: `usePdfDrop` escuta o arrasto de arquivos na tela inteira (`document`) e mostra o `PdfDropOverlay`. Soltar em qualquer lugar cadastra um currículo novo. Soltar **sobre um card** troca o arquivo daquele currículo: o card trata o próprio `drop` (sem propagar), mostra a confirmação "Trocar o PDF por X? O arquivo atual será apagado." e só troca em "Trocar arquivo" (`useReplaceResumeFile`).
+- **Edição no lugar**: `useUpdateResumeForm` salva cada campo ao sair dele (`Enter` também sai; na descrição, `Ctrl+Enter`). O currículo muda **no lugar** da lista, sem reordenar (o `updated_at` mudou, mas o card não deve pular para o topo enquanto se edita).
+- **Renomear tem efeito fora desta tela**: o nome aparece no card do kanban (`resume_name`) e no detalhe das candidaturas. O card do kanban não tem o `resume_id`, então não dá para acertá-lo no cache: ao mudar o **nome**, o `["board"]` e os `["applications"]` são marcados para buscar de novo na próxima vez que forem abertos (é a única exceção à regra "nada invalida o `["board"]`"). Mudar só a descrição não invalida nada.
+- **"Usado em N candidaturas"**: o número vem de `applications_count`. Excluir uma candidatura (`useDeleteApplication`) e trocar o currículo dela no painel (`useUpdateApplicationForm`, quando o corpo tem `resume_id`) invalidam `["resumes"]`. A criação de candidatura ainda não tem `onSuccess`: quando tiver, precisa invalidar `["resumes"]` também.
+- **Excluir**: com `applications_count > 0` o botão fica desabilitado, com o tooltip "Em uso por N candidaturas"; sem candidaturas usa o `DeleteAlert` e `useDeleteResume`. Se a API responder 409 mesmo assim, a mensagem dela aparece.
+- O `ApplicationSheet` recebe só `{ id, company, role }` (`Pick<BoardCard, ...>`), então serve para o card do kanban e para um item da lista "usado em".
+- A cor `drop-overlay` (fundo do aviso de arrasto) é um token novo em `styles.css` e em `cn.ts`, igual ao do protótipo.
 
 ## Componentes base (`common/components/ui/`)
 
@@ -391,6 +402,7 @@ Os componentes primitivos ficam em `src/common/components/ui/`, com o visual do 
 | `label.tsx`         | `Label`                                                                 | Radix Label          | Rótulo de campo                                               |
 | `badge.tsx`         | `StatusBadge`, `StatusDot`                                              | `<span>`             | Selo e ponto do status, pela prop `status` (o `value` da API) |
 | `dialog.tsx`        | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogClose` | Radix Dialog | Modal (ex.: nova candidatura), com fundo escurecido e botão de fechar |
+| `alert-dialog.tsx`  | `AlertDialog`, `AlertDialogTrigger`, `AlertDialogContent`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogFooter`, `DeleteAlert` | Radix AlertDialog | Confirmação de exclusão. `DeleteAlert` recebe o botão como filho (`asChild`), `title`, `description` e `onConfirm` |
 | `sheet.tsx`         | `Sheet`, `SheetTrigger`, `SheetContent`, `SheetTitle`, `SheetDescription`, `SheetClose` | Radix Dialog | Painel lateral (detalhe da candidatura), sem escurecer o fundo |
 | `select.tsx`        | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`, `SelectGroup` | Radix Select | Status, currículo, modelo de trabalho                         |
 | `tooltip.tsx`       | `Tooltip`                                                               | Radix Tooltip        | Dica em botão só com ícone e em botão desabilitado            |

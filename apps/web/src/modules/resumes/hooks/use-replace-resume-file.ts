@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { handleMutationError } from "../../../common/utils/api-error";
 import type { ListResumesResponse } from "../http/list-resumes.http";
 import { replaceResumeFile } from "../http/replace-resume-file.http";
@@ -18,6 +19,7 @@ export const useReplaceResumeFile = () => {
       queryClient.setQueryData<ListResumesResponse>(resumesQueryKey(), (resumes) =>
         resumes?.map((resume) => (resume.id === updated.id ? { ...resume, ...updated } : resume)),
       );
+      toast.success("Arquivo do currículo trocado.");
     },
   });
 };

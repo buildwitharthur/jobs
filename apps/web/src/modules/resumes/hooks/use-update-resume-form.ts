@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { handleMutationError } from "../../../common/utils/api-error";
+import { boardQueryKey } from "../../applications/hooks/use-board";
 import type { ListResumesResponse } from "../http/list-resumes.http";
 import { updateResume } from "../http/update-resume.http";
 import { updateResumeSchema, type UpdateResumeFormValues } from "../schemas/update-resume.schema";
+import { resumesQueryKey } from "./use-resumes";
 
 type Resume = ListResumesResponse[number];
 
@@ -27,11 +29,25 @@ export const useUpdateResumeForm = (resume: Resume | undefined) => {
     resetOptions: { keepDirtyValues: true },
   });
 
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: updateResume,
     onError: handleMutationError,
-    onSuccess: () => {
-      // Configurado, ainda sem ação (ex.: atualizar a lista de currículos, mostrar "salvo").
+    onSuccess: (updated, { body }) => {
+      // O currículo muda no lugar da lista, sem reordenar (a ordem é por `updated_at`, e o card
+      // não deve pular para o topo enquanto a pessoa ainda edita).
+      queryClient.setQueryData<ListResumesResponse>(resumesQueryKey(), (resumes) =>
+        resumes?.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
+      );
+
+      // O nome também aparece no card do kanban e no detalhe das candidaturas. O card do kanban
+      // não tem o `resume_id`, então não dá para acertá-lo no cache: o kanban e os detalhes são
+      // marcados para buscar de novo na próxima vez que forem abertos.
+      if ("name" in body) {
+        void queryClient.invalidateQueries({ queryKey: boardQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: ["applications"] });
+      }
     },
   });
 

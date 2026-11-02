@@ -620,9 +620,9 @@ No escuro, sombra quase não aparece; por isso o que está por cima também é *
 **`button-ghost`**: ações de ícone e ações discretas (recolher coluna, "X" do painel, editar e excluir evento).
 - Sem fundo, texto `{colors.text-secondary}`, altura `{size.control-sm}`, cantos `{rounded.sm}`. Hover em `{colors.surface-sunken}` com texto `{colors.text-primary}`.
 
-**`button-danger`** e **`button-danger-confirm`**: exclusão com confirmação em dois cliques.
-- Primeiro estado: sem fundo, texto `{colors.danger-text}` ("Excluir candidatura").
-- Segundo estado, depois do primeiro clique: fundo `{colors.danger-solid}`, texto `{colors.on-danger}` ("Confirmar exclusão?"). Volta ao primeiro estado em 4 segundos ou ao clicar fora.
+**`button-danger`** e **`button-danger-confirm`**: exclusão com confirmação num `alert-dialog`.
+- `button-danger`: sem fundo, texto `{colors.danger-text}` ("Excluir candidatura"). Abre o alerta.
+- `button-danger-confirm`: fundo `{colors.danger-solid}`, texto `{colors.on-danger}`. É o botão "Excluir" do alerta (e o "Trocar arquivo" do card de currículo).
 
 **`button-disabled`**: fundo `{colors.border}` e texto `{colors.text-muted}` (3,86:1; estado desabilitado dispensado da exigência de contraste). Sempre com tooltip explicando o motivo (ex.: excluir currículo em uso).
 
@@ -716,6 +716,8 @@ O seletor de status do painel de detalhe mostra o `status-badge` do status atual
 
 **`modal`** (nova candidatura): `{size.modal-width}`, cantos `{rounded.lg}`, `{elevation.overlay}`, fundo atrás em `{elevation.backdrop}`. Rodapé com `button-secondary` ("Cancelar") e `button-primary` ("Salvar").
 
+**`alert-dialog`** (confirmar exclusão): como o `modal`, mas menor (420px) e sem o "X"; fica acima do painel lateral e do modal. Título (`{typography.title}`) e uma frase que diz o que será apagado, em `{colors.text-secondary}`. Rodapé com `button-secondary` ("Cancelar") e `button-danger-confirm` ("Excluir"). O foco começa em "Cancelar".
+
 **`toast`** (avisos): canto inferior direito, fundo `{colors.surface}`, borda `{colors.border}`, `{elevation.overlay}`. Ícone colorido conforme o tipo (`info`, `success`, `danger`) e até dois botões de ação (`button-ghost`), como "Desfazer" e "Adicionar nota".
 
 **`tooltip`**: fundo `{colors.text-primary}`, texto `{colors.surface}` (17,85:1), `{typography.caption}`.
@@ -793,7 +795,7 @@ Regras:
 - Não coloque `{colors.text-muted}` sobre `{colors.surface-sunken}`.
 - Não use botões em formato de pílula.
 - Não crie cores fora da seção de cores deste arquivo; cor nova entra nos dois temas, com o contraste conferido.
-- Não use modal para confirmar exclusão: use o `button-danger-confirm`.
+- Não use o `modal` para confirmar exclusão: use o `alert-dialog`.
 
 ## Responsividade
 

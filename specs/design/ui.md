@@ -14,7 +14,7 @@ O objetivo principal é **fazer as tarefas do dia a dia com o menor número de c
 4. **Só o essencial é obrigatório.** Para criar uma candidatura bastam empresa e cargo. O resto fica em "Mais detalhes", recolhido.
 5. **Valores padrão que acertam na maioria das vezes.** Data da candidatura = hoje. Status = Inscrito. Currículo = o último usado.
 6. **Arrastar é mudar de status.** Sem confirmação, porque a ação é reversível. Um aviso rápido permite desfazer.
-7. **Confirmação só para o que não volta.** Excluir candidatura, evento ou currículo e trocar o PDF pedem confirmação, sem modal: o botão vira "Confirmar exclusão?" e um segundo clique confirma.
+7. **Confirmação só para o que não volta.** Excluir candidatura, evento ou currículo abre um alerta pequeno ("Excluir …?") com **Cancelar** e **Excluir**, com o foco em Cancelar. Trocar o PDF pede confirmação no próprio card, sem alerta.
 8. **Teclado como atalho, nunca como obrigação.** Tudo funciona com o mouse; os atalhos só aceleram.
 9. **Erros ao lado do campo.** A API devolve `details` com o campo que falhou; a mensagem aparece embaixo do campo certo, e o resto do formulário continua preenchido.
 
@@ -109,7 +109,7 @@ Tudo sobre um processo, com edição no lugar e a linha do tempo.
 - **Currículo**: seletor com as versões e um link para abrir o PDF.
 - **Linha do tempo**: eventos do mais recente para o mais antigo, com ícone por tipo (criação, mudança de status, nota). No topo dela, um campo **"Adicionar nota"** sempre visível: escrever e `Enter` salva com a data de agora. Um link discreto "agora" ao lado permite escolher outra data (registro retroativo).
 - Passar o mouse sobre um evento mostra **editar** (nota e data) e **excluir**. O evento de criação não tem excluir.
-- **Excluir candidatura** fica no rodapé do painel, com a confirmação de dois cliques. Depois de excluir, o painel fecha e o card some do kanban.
+- **Excluir candidatura** fica no rodapé do painel, com o alerta de confirmação. Depois de excluir, o painel fecha e o card some do kanban.
 - Fechar: `Esc`, o "X" ou clicar fora do painel.
 
 **Critérios de aceite**
@@ -176,7 +176,7 @@ As versões do currículo e onde cada uma foi usada.
 - Lista de cards, do mais recente para o mais antigo: nome, descrição, nome do arquivo, data de atualização e **"usado em N candidaturas"**.
 - **Arrastar um PDF para qualquer lugar da tela** cria um currículo novo. O nome já vem do nome do arquivo (sem `.pdf`) e pode ser editado no lugar logo em seguida. Também há um botão **Enviar PDF** para quem prefere escolher o arquivo.
 - Nome e descrição são editáveis no lugar.
-- **Arrastar um PDF sobre um card** troca o arquivo daquele currículo, com a confirmação de dois cliques (o arquivo antigo é apagado).
+- **Arrastar um PDF sobre um card** troca o arquivo daquele currículo, depois de confirmar no próprio card (o arquivo antigo é apagado).
 - Clicar no nome do arquivo abre o PDF em nova aba.
 - **"Usado em N candidaturas"** expande a lista dessas candidaturas no próprio card; clicar numa delas abre o painel de detalhe (Tela 2).
 - **Excluir** fica desabilitado quando o currículo está em uso, com a explicação "Em uso por N candidaturas". Se a API devolver 409 mesmo assim, a mensagem dela aparece.

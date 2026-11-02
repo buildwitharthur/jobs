@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { handleMutationError } from "../../../common/utils/api-error";
 import { deleteResume } from "../http/delete-resume.http";
 import type { ListResumesResponse } from "../http/list-resumes.http";
@@ -16,10 +17,17 @@ export const useDeleteResume = () => {
     mutationFn: deleteResume,
     onError: handleMutationError,
     onSuccess: (_data, id) => {
+      const name = queryClient
+        .getQueryData<ListResumesResponse>(resumesQueryKey())
+        ?.find((resume) => resume.id === id)?.name;
+
       queryClient.setQueryData<ListResumesResponse>(resumesQueryKey(), (resumes) =>
         resumes?.filter((resume) => resume.id !== id),
       );
       queryClient.removeQueries({ queryKey: resumeApplicationsQueryKey(id) });
+
+      // O aviso fica no hook: o card que pediu a exclusão já não existe quando ela termina.
+      toast.info(name ? `Currículo ${name} excluído.` : "Currículo excluído.");
     },
   });
 };

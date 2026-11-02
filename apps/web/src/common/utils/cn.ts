@@ -50,6 +50,7 @@ const twMergeConfig = {
         "info-bg",
         "info-text",
         "backdrop",
+        "drop-overlay",
         // Cor do status do ancestral com data-status="<value>".
         "status-bg",
         "status-text",

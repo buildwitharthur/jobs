@@ -16,7 +16,7 @@ export const buttonVariants = tv({
       secondary: "border-border bg-surface text-text-primary hover:bg-surface-sunken",
       ghost: "rounded-sm text-text-secondary hover:bg-surface-sunken hover:text-text-primary",
       danger: "text-danger-text hover:bg-danger-bg",
-      // Segundo clique da exclusão ("Confirmar exclusão?").
+      // Botão que confirma uma ação destrutiva (ex.: "Excluir" do alerta, "Trocar arquivo").
       "danger-confirm": "bg-danger-solid text-on-danger",
     },
     size: {
