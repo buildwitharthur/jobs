@@ -78,7 +78,7 @@ apps/api/
         └── <module>/
             ├── domain/{models,repositories,providers}/
             ├── application/usecases/
-            └── infrastructure/{http/{controller,routes},providers,repositories/{prisma}}/
+            └── infrastructure/{http/{controller,presenters,routes},providers,repositories/{prisma}}/
 ```
 
 ### `src/common`: o que é compartilhado por todos os módulos
@@ -109,7 +109,8 @@ Módulos: `statuses`, `applications`, `events`, `board`, `resumes`, `dashboard`.
 | `domain/models/`                           | O vocabulário do módulo                                                   | Interfaces e tipos: entidade e enums                                                          | Express, Prisma, Zod, classes com acesso a dados |
 | `domain/repositories/`                     | O contrato de acesso a dados                                              | Uma interface por entidade, descrevendo o que o use case precisa                              | Implementação, qualquer stack  |
 | `application/usecases/`                    | As regras de negócio                                                      | Uma classe por arquivo, com um método `execute()`, e os tipos `Input` e `Output` do use case  | Express, Prisma, Zod           |
-| `infrastructure/http/controller/`          | A borda HTTP de cada rota                                                 | Uma arrow function por rota: valida, chama o use case, responde. Também o `registerPath` do Swagger | Regra de negócio               |
+| `infrastructure/http/controller/`          | A borda HTTP de cada rota                                                 | **Um arquivo por use case**, com uma arrow function: valida, chama o use case, responde. Também o `registerPath` do Swagger | Regra de negócio               |
+| `infrastructure/http/presenters/`          | O formato de resposta compartilhado entre controllers                     | O schema Zod da resposta e a função que monta o objeto de resposta (ex.: `itemResponseSchema`, `toItemResponse`) | Regra de negócio               |
 | `infrastructure/http/routes/`              | Liga método + caminho ao controller                                       | Um `Router` exportado como `<entity>Routes`                                                   | Lógica                         |
 | `domain/providers/`                        | O contrato de serviços externos que não são dados do banco               | Interface descrevendo o que o controller/use case precisa (ex.: ler um upload)                | Implementação, qualquer stack  |
 | `infrastructure/providers/`                | A implementação concreta de um provider                                   | Classe que implementa a interface de `domain/providers`, usando a biblioteca (ex.: multer)    | Regra de negócio               |
@@ -130,7 +131,10 @@ modules/items/
 │       └── get-item.usecase.ts
 └── infrastructure/
     ├── http/
-    │   ├── controller/item.controller.ts
+    │   ├── controller/
+    │   │   ├── create-item.controller.ts
+    │   │   └── get-item.controller.ts
+    │   ├── presenters/item.presenter.ts
     │   └── routes/item.routes.ts
     ├── providers/                        # implementações dos providers do domínio
     └── repositories/
@@ -241,9 +245,9 @@ export class ItemPrismaRepository implements ItemRepository {
 }
 ```
 
-### Controller (`infrastructure/http/controller/item.controller.ts`)
+### Controller (`infrastructure/http/controller/create-item.controller.ts`)
 
-Uma arrow function por rota, mais o schema Zod e o registro no Swagger da própria rota. Passos, sempre nesta ordem:
+**Um controller por use case, cada um no seu arquivo** (`<verb>-<entity>.controller.ts`, o mesmo nome do use case). O arquivo tem uma arrow function, o schema Zod da requisição e o registro no Swagger da própria rota. Passos, sempre nesta ordem:
 
 1. Validar com `dataValidation(schema, content)`: devolve os dados já formatados (`parsed`) ou lança o erro 400 com os campos que falharam.
 2. Instanciar o use case com a implementação concreta do repositório.
@@ -300,6 +304,27 @@ export const createItemController = async (req: Request, res: Response) => {
 
 Regras do controller:
 
+- O que é compartilhado entre controllers (schema de resposta e função que monta a resposta) vai para o presenter da entidade, em `infrastructure/http/presenters/<entity>.presenter.ts`, e os controllers o importam. Um controller nunca importa de outro controller. Exemplo de presenter:
+
+```ts
+import { z } from "zod";
+import type { Item } from "../../../domain/models/item.model.js";
+
+export const itemResponseSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  description: z.string().nullable(),
+});
+
+export const toItemResponse = (item: Item) => ({
+  id: item.id,
+  name: item.name,
+  description: item.description,
+});
+```
+
+- Schemas usados por um único controller (requisição, parâmetros) ficam no próprio arquivo dele, mesmo que se repitam em outros (ex.: o schema do `:id`).
+
 - Valida **tudo** que a rota recebe (`body`, `params`, `query`) num único schema `z.object({ body, params, query })`, validado por uma única chamada de `dataValidation`, cujo resultado se chama `parsed`. Só entram no schema as partes que a rota realmente recebe.
 - Parâmetros de rota e query chegam como texto: use `z.coerce` para converter (ex.: `z.coerce.number().int().positive()` para `:id`).
 - Rota sem nada a validar (ex.: `GET /statuses`) não usa Zod e não tem `parsed`.
@@ -316,7 +341,8 @@ Regras do controller:
 
 ```ts
 import { Router } from "express";
-import { createItemController, getItemController } from "../controller/item.controller.js";
+import { createItemController } from "../controller/create-item.controller.js";
+import { getItemController } from "../controller/get-item.controller.js";
 
 export const itemRoutes = Router();
 
@@ -359,10 +385,11 @@ Sempre `kebab-case`, no formato `<nome>.<tipo>.ts`.
 | Repository (banco) | `<entity>-prisma.repository.ts`  | Em `infrastructure/repositories/prisma/`                           |
 | Provider   | `<nome>.provider.ts`                     | A interface em `domain/providers` (ex.: `file-upload.provider.ts`); a implementação em `infrastructure/providers` com o nome da biblioteca (ex.: `multer-file-upload.provider.ts`) |
 | Use case   | `<verb>-<entity>.usecase.ts`             | Nomeado pela ação (`create-item.usecase.ts`, `list-items.usecase.ts`) |
-| Controller | `<entity>.controller.ts`                 | Um arquivo por entidade, com um controller por rota dentro          |
+| Controller | `<verb>-<entity>.controller.ts`          | Um arquivo por use case, com o mesmo nome dele (`create-item.controller.ts`) |
+| Presenter  | `<entity>.presenter.ts`                  | Em `infrastructure/http/presenters/`, um por entidade               |
 | Routes     | `<entity>.routes.ts`                     | Singular, como o controller                                         |
 | Middleware | `<nome>.middleware.ts`                   | Em `common/infrastructure/http/middlewares/`                        |
-| Pastas     | `kebab-case`, no plural para coleções    | `models`, `repositories`, `usecases`, `controller`, `routes`        |
+| Pastas     | `kebab-case`, no plural para coleções    | `models`, `repositories`, `usecases`, `controller`, `presenters`, `routes` |
 
 ### Classes, interfaces e tipos: `PascalCase`
 
@@ -416,7 +443,7 @@ Outras regras:
 3. `domain/repositories/<entity>.repository.ts`: a interface.
 4. `application/usecases/`: um arquivo por use case, cada um exportando `Input` e `Output` e com `execute()`.
 5. `infrastructure/repositories/prisma/<entity>-prisma.repository.ts` (ou `repositories/<entity>.repository.ts` se não usar o banco): a implementação.
-6. `infrastructure/http/controller/<entity>.controller.ts`: um controller por rota, com Zod e `registerPath`.
+6. `infrastructure/http/controller/<verb>-<entity>.controller.ts`: um arquivo por use case, com Zod e `registerPath`; o que for compartilhado vai para `infrastructure/http/presenters/<entity>.presenter.ts`.
 7. `infrastructure/http/routes/<entity>.routes.ts`: o router do módulo.
 8. Montar o router em `common/infrastructure/http/routes.ts`.
 9. Rodar `pnpm lint`, `pnpm format:check`, `pnpm build` e `pnpm test` na raiz.
@@ -452,7 +479,7 @@ Outras regras:
 - **Campos desconhecidos** em `body` e `query` são rejeitados com 400 (`z.strictObject`).
 - **Upload de currículo**: o contrato é o `FileUploadProvider` (`resumes/domain/providers/file-upload.provider.ts`), implementado pelo `MulterFileUploadProvider` (`resumes/infrastructure/providers/multer-file-upload.provider.ts`), com `multer` em memória. O controller chama `parse(req)` e valida o resultado com `dataValidation`. Os PDFs ficam em `apps/api/storage/resumes` (pasta ignorada pelo git), com nome único gerado; o repositório de arquivos é `ResumeFileRepository`. Se a gravação no banco falhar depois de gravar o arquivo, o arquivo é apagado. Que o arquivo é um PDF é regra de negócio e é conferida no use case pela assinatura `%PDF-`.
 - **Datas**: o domínio usa `Date`; a resposta usa `YYYY-MM-DD` para datas (`applied_at`) e ISO 8601 para data/hora, convertidas no controller (`common/infrastructure/http/date.ts`).
-- **Use cases que dependem de outros módulos** (por exemplo `GetApplicationUseCase`, que lê currículos e eventos) recebem a interface do repositório do outro módulo pelo construtor, importada da camada `domain` dele. Controllers também podem importar schemas e funções de resposta de outro controller (ex.: `applicationResponseSchema`).
+- **Use cases que dependem de outros módulos** (por exemplo `GetApplicationUseCase`, que lê currículos e eventos) recebem a interface do repositório do outro módulo pelo construtor, importada da camada `domain` dele. Controllers de um módulo podem importar o presenter de outro (ex.: `resumes` usa `application.presenter.ts` para listar as candidaturas de um currículo).
 
 ## Ainda não definido
 

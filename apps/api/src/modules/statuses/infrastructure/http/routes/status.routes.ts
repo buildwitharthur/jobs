@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listStatusesController } from "../controller/status.controller.js";
+import { listStatusesController } from "../controller/list-statuses.controller.js";
 
 export const statusRoutes = Router();
 

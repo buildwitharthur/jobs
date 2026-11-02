@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { dataValidation } from "../../../../../common/infrastructure/validation/zod/data-validation.js";
 import {
   Status,
   WorkModel,
 } from "../../../../../common/infrastructure/database/prisma/generated/enums.js";
 import { fromIsoDate, toIsoDate } from "../../../../../common/infrastructure/http/date.js";
 import { registry } from "../../../../../common/infrastructure/http/openapi.js";
+import { dataValidation } from "../../../../../common/infrastructure/validation/zod/data-validation.js";
 import { ApplicationPrismaRepository } from "../../../../applications/infrastructure/repositories/prisma/application-prisma.repository.js";
 import { EventPrismaRepository } from "../../../../events/infrastructure/repositories/prisma/event-prisma.repository.js";
 import { ResumePrismaRepository } from "../../../../resumes/infrastructure/repositories/prisma/resume-prisma.repository.js";

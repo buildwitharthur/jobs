@@ -1,10 +1,8 @@
 import { Router } from "express";
-import {
-  createEventController,
-  deleteEventController,
-  listEventsController,
-  updateEventController,
-} from "../controller/event.controller.js";
+import { createEventController } from "../controller/create-event.controller.js";
+import { deleteEventController } from "../controller/delete-event.controller.js";
+import { listEventsController } from "../controller/list-events.controller.js";
+import { updateEventController } from "../controller/update-event.controller.js";
 
 export const eventRoutes = Router();
 

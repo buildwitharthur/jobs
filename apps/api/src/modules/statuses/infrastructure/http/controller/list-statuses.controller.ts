@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { registry } from "../../../../../common/infrastructure/http/openapi.js";
 import { Status } from "../../../../../common/infrastructure/database/prisma/generated/enums.js";
+import { registry } from "../../../../../common/infrastructure/http/openapi.js";
 import { ListStatusesUseCase } from "../../../application/usecases/list-statuses.usecase.js";
 import { StatusRepositoryImpl } from "../../repositories/status.repository.js";
 
