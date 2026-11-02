@@ -10,63 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CandidaturasRouteImport } from './routes/candidaturas'
-import { Route as CurriculosRouteImport } from './routes/curriculos'
-import { Route as PainelRouteImport } from './routes/painel'
+import { Route as ShellRouteImport } from './routes/_shell'
+import { Route as ShellCandidaturasRouteImport } from './routes/_shell/candidaturas'
+import { Route as ShellCurriculosRouteImport } from './routes/_shell/curriculos'
+import { Route as ShellPainelRouteImport } from './routes/_shell/painel'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CandidaturasRoute = CandidaturasRouteImport.update({
+const ShellRoute = ShellRouteImport.update({
+  id: '/_shell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShellCandidaturasRoute = ShellCandidaturasRouteImport.update({
   id: '/candidaturas',
   path: '/candidaturas',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ShellRoute,
 } as any)
-const CurriculosRoute = CurriculosRouteImport.update({
+const ShellCurriculosRoute = ShellCurriculosRouteImport.update({
   id: '/curriculos',
   path: '/curriculos',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ShellRoute,
 } as any)
-const PainelRoute = PainelRouteImport.update({
+const ShellPainelRoute = ShellPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ShellRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/candidaturas': typeof CandidaturasRoute
-  '/curriculos': typeof CurriculosRoute
-  '/painel': typeof PainelRoute
+  '/candidaturas': typeof ShellCandidaturasRoute
+  '/curriculos': typeof ShellCurriculosRoute
+  '/painel': typeof ShellPainelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/candidaturas': typeof CandidaturasRoute
-  '/curriculos': typeof CurriculosRoute
-  '/painel': typeof PainelRoute
+  '/candidaturas': typeof ShellCandidaturasRoute
+  '/curriculos': typeof ShellCurriculosRoute
+  '/painel': typeof ShellPainelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/candidaturas': typeof CandidaturasRoute
-  '/curriculos': typeof CurriculosRoute
-  '/painel': typeof PainelRoute
+  '/_shell': typeof ShellRouteWithChildren
+  '/_shell/candidaturas': typeof ShellCandidaturasRoute
+  '/_shell/curriculos': typeof ShellCurriculosRoute
+  '/_shell/painel': typeof ShellPainelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/candidaturas' | '/curriculos' | '/painel'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/candidaturas' | '/curriculos' | '/painel'
-  id: '__root__' | '/' | '/candidaturas' | '/curriculos' | '/painel'
+  id:
+    | '__root__'
+    | '/'
+    | '/_shell'
+    | '/_shell/candidaturas'
+    | '/_shell/curriculos'
+    | '/_shell/painel'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CandidaturasRoute: typeof CandidaturasRoute
-  CurriculosRoute: typeof CurriculosRoute
-  PainelRoute: typeof PainelRoute
+  ShellRoute: typeof ShellRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -78,35 +88,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/candidaturas': {
-      id: '/candidaturas'
+    '/_shell': {
+      id: '/_shell'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ShellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_shell/candidaturas': {
+      id: '/_shell/candidaturas'
       path: '/candidaturas'
       fullPath: '/candidaturas'
-      preLoaderRoute: typeof CandidaturasRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ShellCandidaturasRouteImport
+      parentRoute: typeof ShellRoute
     }
-    '/curriculos': {
-      id: '/curriculos'
+    '/_shell/curriculos': {
+      id: '/_shell/curriculos'
       path: '/curriculos'
       fullPath: '/curriculos'
-      preLoaderRoute: typeof CurriculosRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ShellCurriculosRouteImport
+      parentRoute: typeof ShellRoute
     }
-    '/painel': {
-      id: '/painel'
+    '/_shell/painel': {
+      id: '/_shell/painel'
       path: '/painel'
       fullPath: '/painel'
-      preLoaderRoute: typeof PainelRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ShellPainelRouteImport
+      parentRoute: typeof ShellRoute
     }
   }
 }
 
+interface ShellRouteChildren {
+  ShellCandidaturasRoute: typeof ShellCandidaturasRoute
+  ShellCurriculosRoute: typeof ShellCurriculosRoute
+  ShellPainelRoute: typeof ShellPainelRoute
+}
+
+const ShellRouteChildren: ShellRouteChildren = {
+  ShellCandidaturasRoute: ShellCandidaturasRoute,
+  ShellCurriculosRoute: ShellCurriculosRoute,
+  ShellPainelRoute: ShellPainelRoute,
+}
+
+const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CandidaturasRoute: CandidaturasRoute,
-  CurriculosRoute: CurriculosRoute,
-  PainelRoute: PainelRoute,
+  ShellRoute: ShellRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

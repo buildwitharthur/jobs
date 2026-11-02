@@ -269,6 +269,9 @@
   --color-status-text: var(--ds-s-text);
   --color-status-accent: var(--ds-s-accent);
 
+  /* Fundo atrás do modal (design.md, elevation.backdrop). */
+  --color-backdrop: var(--ds-backdrop);
+
   --shadow-*: initial;
   --shadow-raised: var(--ds-shadow-raised);
   --shadow-dragging: var(--ds-shadow-dragging);
@@ -306,6 +309,31 @@
   --text-number: 30px;
   --text-number--line-height: 36px;
   --text-number--font-weight: 600;
+
+  /* Animações de entrada (design.md, "Movimento"). */
+  --animate-fade-in: fade-in 180ms ease-out;
+  --animate-modal-in: modal-in 240ms ease-out;
+  --animate-sheet-in: sheet-in 240ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
 
   --radius-*: initial;
   --radius-xs: 4px;

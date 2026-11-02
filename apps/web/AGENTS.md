@@ -14,6 +14,7 @@ Interface do painel de candidaturas. Vale junto com o [AGENTS.md](../../AGENTS.m
 - `tailwind-merge` e `tailwind-variants` para montar as classes dos componentes
 - Sonner para os avisos (toasts)
 - React Hook Form com Zod (`@hookform/resolvers`) para os formulários
+- Radix UI (pacote único `radix-ui`) para os componentes primitivos, e `lucide-react` para os ícones
 - Axios para as chamadas à API, com os tipos gerados pelo `openapi-typescript` (só os tipos e os `paths`; o `openapi-fetch` não é usado)
 - Fonte Inter (Google Fonts, carregada no `index.html`)
 
@@ -86,12 +87,17 @@ Todas as rotas do app (o detalhe da candidatura e o modal de nova candidatura n�
 | Caminho          | Arquivo                      | Tela                                    |
 | ---------------- | ---------------------------- | --------------------------------------- |
 | `/`              | `routes/index.tsx`           | Redireciona para `/candidaturas`        |
-| `/candidaturas`  | `routes/candidaturas.tsx`    | `ApplicationsScreen` (kanban e lista)   |
-| `/curriculos`    | `routes/curriculos.tsx`      | `ResumesScreen`                         |
-| `/painel`        | `routes/painel.tsx`          | `DashboardScreen`                       |
+| (layout)         | `routes/_shell.tsx`          | `ShellLayout`: layout das páginas abaixo (sem caminho na URL) |
+| `/candidaturas`  | `routes/_shell/candidaturas.tsx` | `ApplicationsScreen` (kanban e lista) |
+| `/curriculos`    | `routes/_shell/curriculos.tsx` | `ResumesScreen`                       |
+| `/painel`        | `routes/_shell/painel.tsx`   | `DashboardScreen`                       |
 | qualquer outro   | `routes/__root.tsx`          | Redireciona para `/candidaturas`        |
 
 Os parâmetros de URL (filtros, visualização, painel de detalhe) estão em [ui.md](../../specs/design/ui.md#navegação). As rotas ainda não validam nenhum parâmetro.
+
+### Layout `_shell`
+
+As páginas do app ficam dentro da rota de layout **`_shell`**, que não tem caminho na URL (rota *pathless* do TanStack Router): o layout fica em `routes/_shell.tsx` e as páginas em `routes/_shell/`. O componente do layout é o `ShellLayout`, em `common/components/layouts/shell.layout.tsx`. Por enquanto ele só renderiza o `<Outlet />` (a página atual); o menu lateral e o cabeçalho entram nele depois.
 
 ### Padrão: uma tela por página
 
@@ -99,11 +105,11 @@ Os parâmetros de URL (filtros, visualização, painel de detalhe) estão em [ui
 - O arquivo de rota **só importa a tela e a usa como `component`**. Ele não tem JSX nem lógica de tela.
 
 ```tsx
-// src/routes/candidaturas.tsx
+// src/routes/_shell/candidaturas.tsx
 import { createFileRoute } from "@tanstack/react-router";
-import { ApplicationsScreen } from "../modules/applications/screens/applications.screen";
+import { ApplicationsScreen } from "../../modules/applications/screens/applications.screen";
 
-export const Route = createFileRoute("/candidaturas")({
+export const Route = createFileRoute("/_shell/candidaturas")({
   component: ApplicationsScreen,
 });
 ```
@@ -327,6 +333,34 @@ Regras:
 | `useUpdateResumeForm(resume)`       | Edição no lugar do nome e da descrição (`saveField`) | `updateResume`    | `resumes`      |
 
 Ainda **sem** hook de mutação ou formulário: mudar o status (arrastar o card e o seletor do painel), excluir (candidatura, evento, currículo) e trocar o PDF de um currículo. Não têm campos de formulário e entram quando forem pedidos.
+
+## Componentes base (`common/components/ui/`)
+
+Os componentes primitivos ficam em `src/common/components/ui/`, com o visual do [design.md](../../specs/design/design.md) e do protótipo. Os que têm comportamento (abrir, fechar, foco, teclado, acessibilidade) vêm do **Radix UI**, pelo pacote único `radix-ui` (`import { Dialog } from "radix-ui"`); os que são só aparência são elementos HTML com estilo. Os ícones são do `lucide-react`.
+
+| Arquivo             | Exporta                                                                 | Base                 | Uso no app                                                    |
+| ------------------- | ----------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------- |
+| `button.tsx`        | `Button`, `buttonVariants`                                              | `<button>` + `Slot` do Radix | `variant`: `primary`, `secondary`, `ghost`, `danger`, `danger-confirm`; `size`: `md`, `sm`, `icon`; `asChild` para links |
+| `input.tsx`         | `Input`, `inputVariants`                                                | `<input>`            | `variant`: `field` (formulário) ou `inline` (edição no lugar); `aria-invalid` mostra a borda de erro |
+| `textarea.tsx`      | `Textarea`                                                              | `<textarea>`         | Mesmas variantes do `Input`                                   |
+| `label.tsx`         | `Label`                                                                 | Radix Label          | Rótulo de campo                                               |
+| `badge.tsx`         | `StatusBadge`, `StatusDot`                                              | `<span>`             | Selo e ponto do status, pela prop `status` (o `value` da API) |
+| `dialog.tsx`        | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogClose` | Radix Dialog | Modal (ex.: nova candidatura), com fundo escurecido e botão de fechar |
+| `sheet.tsx`         | `Sheet`, `SheetTrigger`, `SheetContent`, `SheetTitle`, `SheetDescription`, `SheetClose` | Radix Dialog | Painel lateral (detalhe da candidatura), sem escurecer o fundo |
+| `select.tsx`        | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`, `SelectGroup` | Radix Select | Status, currículo, modelo de trabalho                         |
+| `tooltip.tsx`       | `Tooltip`                                                               | Radix Tooltip        | Dica em botão só com ícone e em botão desabilitado            |
+| `toggle-group.tsx`  | `ToggleGroup`, `ToggleGroupItem`                                        | Radix Toggle Group   | Alternador Kanban/Lista (`type="single"`) e chips de status (`type="multiple"`) |
+| `collapsible.tsx`   | `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`             | Radix Collapsible    | "Mais detalhes" do modal, "Usado em N candidaturas"           |
+
+Regras:
+
+- Todo componente aceita `className`, que é juntado com `cn` (a classe de fora vence o conflito).
+- Todo `Dialog` e `Sheet` precisa de `DialogTitle`/`SheetTitle` (o Radix exige para acessibilidade). Se o título não deve aparecer, envolva-o com `VisuallyHidden` (`radix-ui`).
+- **`Select`**: o Radix não aceita `value=""` num `SelectItem`. O texto vazio do formulário (nenhum currículo, nenhum modelo) mostra o `placeholder` do `SelectValue`; para a opção "nenhum" na lista, use um valor próprio (ex.: `"none"`) e converta no hook.
+- **`Tooltip`**: o filho precisa aceitar `ref` e foco. Botão desabilitado não dispara eventos: envolva-o num `<span>` para a dica aparecer. O `Tooltip` já traz o seu `Provider`; não precisa de nada no `main.tsx`.
+- Componente novo só entra aqui quando é usado por mais de um módulo; se é de uma tela só, fica no `components/` do módulo.
+
+Tokens que entraram com esses componentes (em `styles.css` e no `cn.ts`): a cor `bg-backdrop` (fundo atrás do modal) e as animações `animate-fade-in`, `animate-modal-in` e `animate-sheet-in` (tempos do "Movimento" do design.md).
 
 ## Componentes: `cn` e `tv`
 

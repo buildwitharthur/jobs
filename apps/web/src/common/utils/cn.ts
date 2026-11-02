@@ -49,6 +49,7 @@ const twMergeConfig = {
         "warning-text",
         "info-bg",
         "info-text",
+        "backdrop",
         // Cor do status do ancestral com data-status="<value>".
         "status-bg",
         "status-text",
@@ -62,6 +63,7 @@ const twMergeConfig = {
       text: ["display", "title", "heading", "body", "caption", "label", "number"],
       "font-weight": ["regular"],
       shadow: ["raised", "dragging", "overlay"],
+      animate: ["fade-in", "modal-in", "sheet-in"],
       spacing: [
         "xxs",
         "xs",
