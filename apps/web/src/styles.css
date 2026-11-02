@@ -388,6 +388,16 @@
     color: var(--color-text-muted);
   }
 
+  /* Sem barras de rolagem visíveis no app: a rolagem continua funcionando (roda do mouse,
+     trackpad, teclado), só a barra some. */
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

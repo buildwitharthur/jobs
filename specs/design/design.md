@@ -574,6 +574,7 @@ Base de **4px**, com incremento principal de 8px: `{spacing.xxs}` (4px) até `{s
 - **Menu lateral** fixo à esquerda (`{size.nav-width}`), com os três itens do [ui.md](ui.md).
 - **Cabeçalho** de cada tela com título, busca e o botão primário. Não há barra de filtros.
 - **Kanban**: colunas lado a lado, com `{spacing.sm}` entre elas, que dividem o espaço disponível entre `{size.column-min-width}` e `{size.column-max-width}` de largura; encerradas recolhidas em `{size.column-collapsed-width}`. Cada coluna rola sozinha na vertical.
+- **Barras de rolagem** ficam escondidas em todo o app. A rolagem continua funcionando (roda do mouse, trackpad, teclado); só a barra não aparece.
 - **Painel lateral** (`{size.drawer-width}`) desliza da direita por cima do conteúdo; o conteúdo atrás continua visível.
 - Telas sem kanban (currículos, painel) têm largura máxima de 1200px.
 

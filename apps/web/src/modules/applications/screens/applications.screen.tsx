@@ -1,7 +1,20 @@
+import { Plus } from "lucide-react";
+import { Button } from "../../../common/components/ui/button";
+import { CreateApplicationDialog } from "../components/create-application-dialog";
+import { Kbd } from "../components/kbd";
+
 export function ApplicationsScreen() {
   return (
-    <div className="p-xl">
-      <h1 className="text-display">Candidaturas</h1>
-    </div>
+    <header className="gap-sm px-xl pt-lg pb-md flex flex-wrap items-center">
+      <h1 className="text-display mr-xs">Candidaturas</h1>
+      <div className="flex-1" />
+      <CreateApplicationDialog>
+        <Button>
+          <Plus aria-hidden />
+          Nova candidatura
+          <Kbd className="bg-primary-hover text-on-primary border-transparent">N</Kbd>
+        </Button>
+      </CreateApplicationDialog>
+    </header>
   );
 }

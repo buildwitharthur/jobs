@@ -194,6 +194,15 @@ body {
   height: 100%;
 }
 
+/* Sem barras de rolagem visíveis: a rolagem continua funcionando, só a barra some. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);
