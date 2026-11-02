@@ -154,7 +154,7 @@ export function ResumeCard({ resume }: ResumeCardProps) {
         <CollapsibleContent>
           <ResumeApplications resumeId={resume.id} />
         </CollapsibleContent>
-        <div className="border-border pt-xs gap-xs flex items-center justify-between border-t">
+        <div className="border-border pt-xs gap-xs flex flex-wrap items-center justify-between border-t">
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="group">
               <ChevronRight
@@ -166,7 +166,7 @@ export function ResumeCard({ resume }: ResumeCardProps) {
           </CollapsibleTrigger>
           {count > 0 ? (
             <Tooltip content={`Em uso por ${usage}`}>
-              <span>
+              <span className="ml-auto">
                 <Button variant="danger" disabled>
                   <Trash2 aria-hidden />
                   Excluir
@@ -184,7 +184,7 @@ export function ResumeCard({ resume }: ResumeCardProps) {
               }
               onConfirm={() => deleteResume(resume.id)}
             >
-              <Button variant="danger" disabled={isDeleting}>
+              <Button variant="danger" className="ml-auto" disabled={isDeleting}>
                 <Trash2 aria-hidden />
                 Excluir
               </Button>
