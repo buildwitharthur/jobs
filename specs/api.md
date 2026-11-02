@@ -4,19 +4,21 @@ Checklist das rotas da API do app de controle de candidaturas (ver [overview.md]
 
 ## Convenções
 
-- Prefixo de todas as rotas: `/api`
+- Sem prefixo: as rotas ficam na raiz (ex.: `/applications`)
 - Corpo das requisições e respostas em JSON, exceto upload e download de currículo (`multipart/form-data` e `application/pdf`).
 - Datas no formato ISO 8601 (`2026-11-02` para datas, `2026-11-02T14:30:00Z` para data/hora).
 - Sem autenticação.
-- Formato padrão de erro:
+- Formato padrão de erro (tratado pelo `errorHandler` da API):
 
 ```json
 {
-  "error": "validation_error",
-  "message": "Descrição legível do erro",
-  "details": { "company": "campo obrigatório" }
+  "code": "validation_error",
+  "message": "Descrição legível do erro"
 }
 ```
+
+- `code` identifica o tipo do erro (`validation_error`, `not_found`, `conflict`, `internal_error`). Erros de aplicação lançados sem código usam `bad_request`.
+- Erros inesperados retornam 500 com `code` `internal_error` e uma mensagem genérica, sem expor detalhes internos.
 
 | Código | Uso |
 | ------ | --- |
@@ -26,6 +28,7 @@ Checklist das rotas da API do app de controle de candidaturas (ver [overview.md]
 | 400 | Payload ou parâmetros inválidos |
 | 404 | Recurso não encontrado |
 | 409 | Conflito (ex.: excluir currículo em uso) |
+| 500 | Erro interno inesperado |
 
 ### Status (lista fixa)
 
@@ -100,7 +103,7 @@ Qualquer status pode mudar para qualquer outro (o kanban permite arrastar livrem
   "name": "Backend Sênior",
   "description": "Foco em Node e arquitetura",
   "file_name": "backend-senior.pdf",
-  "file_url": "/api/resumes/3/file",
+  "file_url": "/resumes/3/file",
   "applications_count": 4,
   "created_at": "2026-10-01T09:00:00Z",
   "updated_at": "2026-10-15T09:00:00Z"
@@ -114,7 +117,7 @@ Qualquer status pode mudar para qualquer outro (o kanban permite arrastar livrem
 
 ## Status
 
-### [ ] `GET /api/statuses` — Listar status
+### [ ] `GET /statuses` — Listar status
 
 Retorna a lista fixa de status, na ordem das colunas do kanban.
 
@@ -139,7 +142,7 @@ Retorna a lista fixa de status, na ordem das colunas do kanban.
 
 ## Candidaturas
 
-### [ ] `POST /api/applications` — Criar candidatura
+### [ ] `POST /applications` — Criar candidatura
 
 **Payload:**
 
@@ -176,7 +179,7 @@ Retorna a lista fixa de status, na ordem das colunas do kanban.
 - [ ] Retorna 400 com `resume_id` de currículo que não existe.
 - [ ] Ignora campos desconhecidos no payload (ou retorna 400; definir e testar um dos dois).
 
-### [ ] `GET /api/applications` — Listar candidaturas
+### [ ] `GET /applications` — Listar candidaturas
 
 **Parâmetros de query (todos opcionais):**
 
@@ -208,7 +211,7 @@ Retorna a lista fixa de status, na ordem das colunas do kanban.
 - [ ] Retorna 400 com `from` / `to` em formato inválido.
 - [ ] Retorna 400 com `sort` em campo não permitido.
 
-### [ ] `GET /api/applications/:id` — Detalhar candidatura
+### [ ] `GET /applications/:id` — Detalhar candidatura
 
 Retorna a candidatura com o currículo usado e o histórico completo, para a tela de detalhes.
 
@@ -222,7 +225,7 @@ Retorna a candidatura com o currículo usado e o histórico completo, para a tel
   "company": "Acme",
   "role": "Desenvolvedor Backend Sênior",
   "status": "interview",
-  "resume": { "id": 3, "name": "Backend Sênior", "file_url": "/api/resumes/3/file" },
+  "resume": { "id": 3, "name": "Backend Sênior", "file_url": "/resumes/3/file" },
   "events": [
     { "id": 11, "type": "status_change", "from_status": "applied", "to_status": "interview", "note": null, "occurred_at": "2026-11-05T10:00:00Z" },
     { "id": 10, "type": "created", "from_status": null, "to_status": "applied", "note": null, "occurred_at": "2026-11-02T14:30:00Z" }
@@ -241,9 +244,9 @@ Retorna a candidatura com o currículo usado e o histórico completo, para a tel
 - [ ] Retorna 404 para `id` inexistente.
 - [ ] Retorna 400 (ou 404) para `id` não numérico.
 
-### [ ] `PATCH /api/applications/:id` — Editar candidatura
+### [ ] `PATCH /applications/:id` — Editar candidatura
 
-Atualiza parcialmente os dados da candidatura. **Não altera o status**; para isso use `PATCH /api/applications/:id/status`.
+Atualiza parcialmente os dados da candidatura. **Não altera o status**; para isso use `PATCH /applications/:id/status`.
 
 **Payload (qualquer subconjunto dos campos):**
 
@@ -271,7 +274,7 @@ Atualiza parcialmente os dados da candidatura. **Não altera o status**; para is
 - [ ] Retorna 400 com `resume_id` inexistente.
 - [ ] Retorna 404 para `id` inexistente.
 
-### [ ] `PATCH /api/applications/:id/status` — Mudar status
+### [ ] `PATCH /applications/:id/status` — Mudar status
 
 Usada pelo kanban ao arrastar um card e pela tela de detalhes. Muda o status e registra um evento `status_change`.
 
@@ -314,7 +317,7 @@ Usada pelo kanban ao arrastar um card e pela tela de detalhes. Muda o status e r
 - [ ] Retorna 400 com `occurred_at` inválido.
 - [ ] Retorna 404 para `id` inexistente.
 
-### [ ] `DELETE /api/applications/:id` — Excluir candidatura
+### [ ] `DELETE /applications/:id` — Excluir candidatura
 
 **Payload:** nenhum
 
@@ -324,7 +327,7 @@ Usada pelo kanban ao arrastar um card e pela tela de detalhes. Muda o status e r
 
 - [ ] Exclui e retorna 204.
 - [ ] A candidatura some da listagem e do kanban.
-- [ ] `GET /api/applications/:id` retorna 404 depois da exclusão.
+- [ ] `GET /applications/:id` retorna 404 depois da exclusão.
 - [ ] Exclui junto todos os eventos do histórico da candidatura.
 - [ ] Não exclui o currículo vinculado.
 - [ ] Retorna 404 para `id` inexistente.
@@ -333,7 +336,7 @@ Usada pelo kanban ao arrastar um card e pela tela de detalhes. Muda o status e r
 
 ## Histórico (eventos)
 
-### [ ] `GET /api/applications/:id/events` — Listar histórico
+### [ ] `GET /applications/:id/events` — Listar histórico
 
 **Payload:** nenhum
 
@@ -346,7 +349,7 @@ Usada pelo kanban ao arrastar um card e pela tela de detalhes. Muda o status e r
 - [ ] Não retorna eventos de outras candidaturas.
 - [ ] Retorna 404 para candidatura inexistente.
 
-### [ ] `POST /api/applications/:id/events` — Adicionar evento manual
+### [ ] `POST /applications/:id/events` — Adicionar evento manual
 
 Registra algo que aconteceu no processo sem mudar o status (entrevista marcada, feedback recebido, follow-up enviado).
 
@@ -376,7 +379,7 @@ Registra algo que aconteceu no processo sem mudar o status (entrevista marcada, 
 - [ ] Retorna 400 se tentar enviar `type`, `from_status` ou `to_status`.
 - [ ] Retorna 404 para candidatura inexistente.
 
-### [ ] `PATCH /api/applications/:id/events/:eventId` — Editar evento
+### [ ] `PATCH /applications/:id/events/:eventId` — Editar evento
 
 Corrige a nota ou a data de um evento.
 
@@ -401,7 +404,7 @@ Corrige a nota ou a data de um evento.
 - [ ] Retorna 404 para evento inexistente.
 - [ ] Retorna 404 se o evento pertence a outra candidatura.
 
-### [ ] `DELETE /api/applications/:id/events/:eventId` — Excluir evento
+### [ ] `DELETE /applications/:id/events/:eventId` — Excluir evento
 
 Remove um evento registrado por engano. Não altera o status atual da candidatura.
 
@@ -422,7 +425,7 @@ Remove um evento registrado por engano. Não altera o status atual da candidatur
 
 ## Kanban
 
-### [ ] `GET /api/board` — Dados do kanban
+### [ ] `GET /board` — Dados do kanban
 
 Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fixa. Aceita os mesmos filtros `q`, `from`, `to` e `resume_id` da listagem.
 
@@ -461,14 +464,14 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] `count` bate com o número de cards da coluna.
 - [ ] Cards ordenados por `last_event_at` decrescente dentro da coluna.
 - [ ] Cada card traz `id`, `company`, `role`, `applied_at`, `work_model`, `resume_name` e `last_event_at`.
-- [ ] Depois de `PATCH /api/applications/:id/status`, o card aparece na nova coluna.
+- [ ] Depois de `PATCH /applications/:id/status`, o card aparece na nova coluna.
 - [ ] Filtros `q`, `from`, `to` e `resume_id` reduzem os cards e mantêm todas as colunas.
 
 ---
 
 ## Currículos
 
-### [ ] `POST /api/resumes` — Cadastrar currículo
+### [ ] `POST /resumes` — Cadastrar currículo
 
 **Payload (`multipart/form-data`):**
 
@@ -491,7 +494,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna 400 com arquivo que não é PDF.
 - [ ] Não deixa arquivo no disco quando a validação falha.
 
-### [ ] `GET /api/resumes` — Listar currículos
+### [ ] `GET /resumes` — Listar currículos
 
 **Payload:** nenhum
 
@@ -503,7 +506,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna todos os currículos ordenados por `updated_at` decrescente.
 - [ ] `applications_count` mostra quantas candidaturas usam cada currículo.
 
-### [ ] `GET /api/resumes/:id` — Detalhar currículo
+### [ ] `GET /resumes/:id` — Detalhar currículo
 
 **Payload:** nenhum
 
@@ -514,7 +517,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna 200 com todos os campos.
 - [ ] Retorna 404 para `id` inexistente.
 
-### [ ] `GET /api/resumes/:id/file` — Baixar/visualizar PDF
+### [ ] `GET /resumes/:id/file` — Baixar/visualizar PDF
 
 **Payload:** nenhum
 
@@ -528,7 +531,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna 404 para `id` inexistente.
 - [ ] Retorna 404 se o registro existe mas o arquivo sumiu do disco.
 
-### [ ] `GET /api/resumes/:id/applications` — Candidaturas que usaram o currículo
+### [ ] `GET /resumes/:id/applications` — Candidaturas que usaram o currículo
 
 **Payload:** nenhum
 
@@ -540,7 +543,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna lista vazia quando o currículo não foi usado.
 - [ ] Retorna 404 para currículo inexistente.
 
-### [ ] `PATCH /api/resumes/:id` — Editar dados do currículo
+### [ ] `PATCH /resumes/:id` — Editar dados do currículo
 
 **Payload:**
 
@@ -561,7 +564,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna 400 com `name` vazio ou `null`.
 - [ ] Retorna 404 para `id` inexistente.
 
-### [ ] `PUT /api/resumes/:id/file` — Substituir o PDF
+### [ ] `PUT /resumes/:id/file` — Substituir o PDF
 
 **Payload (`multipart/form-data`):**
 
@@ -573,7 +576,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 
 **Testes:**
 
-- [ ] Substitui o arquivo e `GET /api/resumes/:id/file` passa a retornar o novo conteúdo.
+- [ ] Substitui o arquivo e `GET /resumes/:id/file` passa a retornar o novo conteúdo.
 - [ ] Remove o arquivo antigo do disco.
 - [ ] Atualiza `file_name` e `updated_at`.
 - [ ] Mantém os vínculos com as candidaturas.
@@ -581,7 +584,7 @@ Retorna as candidaturas agrupadas por status, uma coluna por status, na ordem fi
 - [ ] Retorna 400 com arquivo que não é PDF, e o arquivo antigo continua intacto.
 - [ ] Retorna 404 para `id` inexistente.
 
-### [ ] `DELETE /api/resumes/:id` — Excluir currículo
+### [ ] `DELETE /resumes/:id` — Excluir currículo
 
 Só exclui currículos que não estão vinculados a nenhuma candidatura, para não perder a informação de qual currículo foi enviado.
 
@@ -601,7 +604,7 @@ Só exclui currículos que não estão vinculados a nenhuma candidatura, para n�
 
 ## Painel
 
-### [ ] `GET /api/dashboard` — Resumo geral
+### [ ] `GET /dashboard` — Resumo geral
 
 **Payload:** nenhum
 

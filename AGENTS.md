@@ -14,6 +14,7 @@ Antes de escrever código, criar arquivos, sugerir mudanças ou responder dúvid
 | --------- | -------- |
 | [specs/overview.md](specs/overview.md) | Contexto do app, objetivos, conceitos, funcionalidades, escopo e premissas |
 | [specs/domain.md](specs/domain.md) | Models, enums, interfaces de entrada e saída e regras de negócio |
+| [specs/stack.md](specs/stack.md) | Tecnologias já decididas para o projeto |
 | [specs/api.md](specs/api.md) | Checklist das rotas: método, caminho, payload, resposta e testes |
 
 Leia sempre o `overview.md` primeiro. Depois leia os documentos relacionados à tarefa.

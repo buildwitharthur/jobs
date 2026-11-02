@@ -256,7 +256,7 @@ interface ReplaceResumeFileInput {
 ```ts
 /** Resume como é exposto pela API. */
 interface ResumeView extends Omit<Resume, "file_path"> {
-  file_url: string;             // "/api/resumes/:id/file"
+  file_url: string;             // "/resumes/:id/file"
   applications_count: number;
 }
 
@@ -334,11 +334,15 @@ interface Dashboard {
 ### Erro
 
 ```ts
-type ErrorCode = "validation_error" | "not_found" | "conflict";
+type ErrorCode =
+  | "validation_error"
+  | "not_found"
+  | "conflict"
+  | "bad_request"      // padrão de AppError quando nenhum código é informado
+  | "internal_error";  // erro inesperado (500)
 
 interface ApiError {
-  error: ErrorCode;
+  code: ErrorCode;
   message: string;
-  details?: Record<string, string>; // campo → mensagem
 }
 ```
